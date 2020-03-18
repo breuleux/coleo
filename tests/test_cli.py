@@ -139,7 +139,6 @@ def test_conflict():
         auto_cli(stout, (3,), argv="--z=3 --q=10".split())
 
 
-@tooled
 def patriotism():
     # Whether to wave the flag or not
     # [aliases: -f --yay]
@@ -264,6 +263,11 @@ def test_config_dict():
     assert auto_cli(patriotism, (), argv=[{"flag": False}],) == "don't wave"
 
 
+def test_bad_entry():
+    with pytest.raises(TypeError):
+        auto_cli([patriotism], (), argv="--flag")
+
+
 def test_subcommands():
     assert (
         auto_cli(
@@ -279,6 +283,30 @@ def test_subcommands():
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv="patriotism --flag".split(),
+        )
+        == "wave"
+    )
+
+    assert (
+        auto_cli(
+            {"thingy": thingy, "patri": {"otism": patriotism}},
+            (),
+            argv="patri otism --flag".split(),
+        )
+        == "wave"
+    )
+
+    assert (
+        auto_cli(
+            {
+                "thingy": thingy,
+                "patri": {
+                    "__doc__": "Vaccines certainly don't cause",
+                    "otism": patriotism,
+                },
+            },
+            (),
+            argv="patri otism --flag".split(),
         )
         == "wave"
     )

@@ -7,12 +7,20 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from itertools import count
+from types import FunctionType
 
-from ptera.core import BaseOverlay, PteraFunction
-from ptera.selector import select
+from ptera import (
+    ABSENT,
+    BaseOverlay,
+    PteraFunction,
+    Tag,
+    TagSet,
+    match_tag,
+    select,
+    tag,
+    tooled,
+)
 from ptera.selfless import PreState
-from ptera.tags import Tag, TagSet, match_tag, tag
-from ptera.utils import ABSENT
 
 Argument = tag.Argument
 
@@ -158,24 +166,31 @@ class ArgsExpander:
             parser.error(str(err))
 
 
+def parse_options(parser, *, argv=None, expand=None):
+    if isinstance(argv, argparse.Namespace):
+        args = argv
+    else:
+        argv = sys.argv[1:] if argv is None else argv
+        if expand:
+            argv = expand(argv, parser=parser)
+        args = parser.parse_args(argv)
+    return args
+
+
 class Configurator:
     def __init__(
         self,
         *,
+        argparser,
         entry_point=None,
         tag=Argument,
         description=None,
-        argparser=None,
         eval_env=None,
         expand=None,
     ):
         cg = catalogue(entry_point)
         self.tag = tag
         self.names = _find_configurable(cg, tag)
-        if argparser is None:
-            argparser = argparse.ArgumentParser(
-                description=description, argument_default=argparse.SUPPRESS,
-            )
         self.argparser = argparser
         self._fill_argparser()
         self.eval_env = eval_env
@@ -300,23 +315,14 @@ class Configurator:
         resolve.__name__ = getattr(typ, "__name__", str(typ))
         return resolve
 
-    def get_options(self, argv):
-        if isinstance(argv, argparse.Namespace):
-            args = argv
-        else:
-            argv = sys.argv[1:] if argv is None else argv
-            if self.expand:
-                argv = self.expand(argv, parser=self.argparser)
-            args = self.argparser.parse_args(argv)
-        opts = {k: v for k, v in vars(args).items() if not k.startswith("#")}
-        return opts
-
     @contextmanager
     def __call__(self, argv=None):
         def _resolver(value):
             return lambda **_: value
 
-        opts = self.get_options(argv)
+        opts = parse_options(self.argparser, argv=argv, expand=self.expand)
+        opts = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
+
         with BaseOverlay(
             {
                 select(f"{name}:##X", env={"##X": self.tag}): {
@@ -326,6 +332,32 @@ class Configurator:
             }
         ):
             yield opts
+
+
+def _getdoc(obj):
+    if isinstance(obj, dict):
+        return obj.get("__doc__", None)
+    else:
+        return getattr(obj, "__doc__", None)
+
+
+def _auto_cli_helper(parser, entry, **kwargs):
+    if isinstance(entry, dict):
+        subparsers = parser.add_subparsers()
+        for name, subentry in entry.items():
+            if name == "__doc__":
+                continue
+            subparser = subparsers.add_parser(
+                name, help=_getdoc(subentry), argument_default=argparse.SUPPRESS
+            )
+            _auto_cli_helper(subparser, subentry)
+    else:
+        if isinstance(entry, FunctionType):
+            entry = tooled(entry)
+        if not isinstance(entry, PteraFunction):
+            raise TypeError(f"Expected a dict or a function, not {type(entry)}")
+        cfg = Configurator(entry_point=entry, argparser=parser, **kwargs)
+        parser.set_defaults(**{"#cfg": (cfg, entry)})
 
 
 def auto_cli(
@@ -338,46 +370,20 @@ def auto_cli(
     description=None,
     eval_env=None,
     expand=None,
+    print_result=True,
 ):
     if expand is None or isinstance(expand, str):
         expand = ArgsExpander(prefix=expand or "", default_file=None,)
 
-    if isinstance(entry, dict):
-        parser = argparse.ArgumentParser(
-            description=description, argument_default=argparse.SUPPRESS,
-        )
-        subparsers = parser.add_subparsers()
-        for name, fn in entry.items():
-            assert isinstance(fn, PteraFunction)
-            p = subparsers.add_parser(
-                name, help=fn.__doc__, argument_default=argparse.SUPPRESS
-            )
-            cfg = Configurator(
-                entry_point=fn,
-                argparser=p,
-                tag=tag,
-                description=description,
-                eval_env=eval_env,
-            )
-            p.set_defaults(**{"#cfg": cfg, "#fn": fn})
-
-        argv = sys.argv[1:] if argv is None else argv
-        argv = expand(argv, parser=parser)
-
-        opts = parser.parse_args(argv)
-        cfg = getattr(opts, "#cfg")
-        fn = getattr(opts, "#fn")
-        with cfg(opts):
-            return fn(*args)
-
-    else:
-        assert isinstance(entry, PteraFunction)
-        cfg = Configurator(
-            entry_point=entry,
-            tag=tag,
-            description=description,
-            eval_env=eval_env,
-            expand=expand,
-        )
-        with cfg(argv):
-            return entry(*args)
+    parser = argparse.ArgumentParser(
+        description=description or _getdoc(entry),
+        argument_default=argparse.SUPPRESS,
+    )
+    _auto_cli_helper(parser, entry, tag=tag, eval_env=eval_env)
+    opts = parse_options(parser, argv=argv, expand=expand)
+    cfg, fn = getattr(opts, "#cfg")
+    with cfg(opts):
+        result = fn(*args)
+        if print_result and result is not None:
+            print(result)
+        return result
