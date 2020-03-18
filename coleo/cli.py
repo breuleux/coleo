@@ -1,6 +1,4 @@
 import argparse
-import configparser
-import json
 import os
 import re
 import sys
@@ -21,6 +19,8 @@ from ptera import (
     tooled,
 )
 from ptera.selfless import PreState
+
+from .config import ConfigFile
 
 Argument = tag.Argument
 
@@ -64,49 +64,12 @@ def _find_configurable(catalogue, tag):
     return rval
 
 
-def _read_cfg(file):
-    parser = configparser.ConfigParser()
-    s = file.read()
-    parser.read_string(s)
-    if parser.sections() != ["default"]:
-        raise OSError(
-            "A cfg/ini file containing options must only contain"
-            " the [default] section"
-        )
-    return dict(parser["default"])
-
-
 class ArgsExpander:
     def __init__(self, prefix, default_file=None):
         self.prefix = prefix
         self.default_file = default_file
         if default_file:
             assert self.prefix
-
-    def _get_loader(self, filename):
-        ext = filename.split(".")[-1]
-        if ext == "json":
-            return json.load
-        elif ext == "yaml":
-            try:
-                import yaml
-            except ModuleNotFoundError:  # pragma: no cover
-                raise OSError(
-                    f"Please install the 'pyyaml' module to read '.yaml' files"
-                )
-            return yaml.full_load
-        elif ext == "toml":
-            try:
-                import toml
-            except ModuleNotFoundError:  # pragma: no cover
-                raise OSError(
-                    f"Please install the 'toml' module to read '.toml' files"
-                )
-            return toml.load
-        elif ext in ["cfg", "ini"]:
-            return _read_cfg
-        else:
-            raise OSError(f"Cannot read file format: '{ext}'")
 
     def _generate_args_from_dict(self, contents):
         results = []
@@ -138,9 +101,8 @@ class ArgsExpander:
         return results
 
     def _generate_args_from_file(self, filename):
-        with open(filename) as args_file:
-            contents = self._get_loader(filename)(args_file)
-            return self._generate_args_from_dict(contents)
+        contents = ConfigFile(filename).read()
+        return self._generate_args_from_dict(contents)
 
     def expand(self, argv):
         if self.default_file:
