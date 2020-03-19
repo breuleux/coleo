@@ -159,6 +159,7 @@ class Configurator:
         self.expand = expand
 
     def _fill_argparser(self):
+        has_positional = False
         entries = list(sorted(list(self.names.items())))
         for name, data in entries:
             docs = set()
@@ -234,6 +235,12 @@ class Configurator:
                     )
             else:
                 if nargs is not False:
+                    if has_positional:
+                        raise Exception(
+                            "Only one positional argument or group of "
+                            "arguments is allowed."
+                        )
+                    has_positional = True
                     self.argparser.add_argument(
                         name,
                         type=self.resolver(typ or None),

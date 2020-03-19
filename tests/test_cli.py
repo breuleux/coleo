@@ -406,6 +406,20 @@ def test_positional():
 
 
 @tooled
+def multipos():
+    # [special: positional]
+    one: tag.Argument
+    # [special: positional]
+    two: tag.Argument
+    return two, one
+
+
+def test_multiple_positional():
+    with pytest.raises(Exception):
+        auto_cli(multipos, (), argv=["hello", "there"])
+
+
+@tooled
 def badbadbad():
     # [special: bad]
     ohno: tag.Argument
