@@ -192,28 +192,21 @@ class Configurator:
             for entry in docs:
                 new_entry = []
                 for line in entry.split("\n"):
-                    m = re.match(r"\[([A-Za-z0-9_-]+): (.*)\]", line)
+                    m = re.match(r"\[([A-Za-z0-9_-]+)(:.*)?\]", line)
                     if m:
                         command, arg = m.groups()
                         command = command.lower()
+                        arg = arg and arg[1:].strip()
                         if command in ["alias", "aliases"]:
                             aliases.extend(re.split(r"[ ,;]+", arg))
                         elif command in ["option", "options"]:
                             aliases = re.split(r"[ ,;]+", arg)
-                        elif command in ["special"]:
-                            for flag in re.split(r"[ ,;]+", arg):
-                                if flag == "positional":
-                                    nargs = None
-                                elif flag.startswith("positional="):
-                                    nargs = flag.split("=")[1]
-                                    try:
-                                        nargs = int(nargs)
-                                    except ValueError:
-                                        pass
-                                else:
-                                    raise Exception(
-                                        f"Unknown special flag: {flag}"
-                                    )
+                        elif command == "positional":
+                            nargs = arg or None
+                            try:
+                                nargs = int(nargs)
+                            except Exception:
+                                pass
                     else:
                         new_entry.append(line)
                 optdoc.append("\n".join(new_entry))

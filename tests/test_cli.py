@@ -370,7 +370,7 @@ def test_config_subcommands(tmpdir):
 @tooled
 def groot():
     # Name to groot
-    # [special: positional]
+    # [positional]
     name: tag.Argument
     return f"Grootings, {name}!"
 
@@ -378,7 +378,7 @@ def groot():
 @tooled
 def translate():
     # Translation vector
-    # [special: positional=2]
+    # [positional: 2]
     vector: tag.Argument & int
     return vector
 
@@ -386,7 +386,7 @@ def translate():
 @tooled
 def reverso():
     # Things to reverse
-    # [special: positional=*]
+    # [positional: *]
     things: tag.Argument
     things.reverse()
     return things
@@ -407,9 +407,9 @@ def test_positional():
 
 @tooled
 def multipos():
-    # [special: positional]
+    # [positional]
     one: tag.Argument
-    # [special: positional]
+    # [positional]
     two: tag.Argument
     return two, one
 
@@ -417,18 +417,6 @@ def multipos():
 def test_multiple_positional():
     with pytest.raises(Exception):
         auto_cli(multipos, (), argv=["hello", "there"])
-
-
-@tooled
-def badbadbad():
-    # [special: bad]
-    ohno: tag.Argument
-    return ohno
-
-
-def test_bad_special():
-    with pytest.raises(Exception):
-        auto_cli(badbadbad, (), argv=["hello"])
 
 
 def test_setvars():
