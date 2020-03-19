@@ -279,20 +279,9 @@ class Configurator:
 
     @contextmanager
     def __call__(self, argv=None):
-        def _resolver(value):
-            return lambda **_: value
-
         opts = parse_options(self.argparser, argv=argv, expand=self.expand)
         opts = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
-
-        with BaseOverlay(
-            {
-                select(f"{name}:##X", env={"##X": self.tag}): {
-                    "value": _resolver(value)
-                }
-                for name, value in opts.items()
-            }
-        ):
+        with _setvars(opts, self.tag):
             yield opts
 
 
@@ -320,6 +309,22 @@ def _auto_cli_helper(parser, entry, **kwargs):
             raise TypeError(f"Expected a dict or a function, not {type(entry)}")
         cfg = Configurator(entry_point=entry, argparser=parser, **kwargs)
         parser.set_defaults(**{"#cfg": (cfg, entry)})
+
+
+def _setvars(values, tag):
+    def _resolver(value):
+        return lambda **_: value
+
+    return BaseOverlay(
+        {
+            select(f"{name}:##X", env={"##X": tag}): {"value": _resolver(value)}
+            for name, value in values.items()
+        }
+    )
+
+
+def setvars(**values):
+    return _setvars(values, tag=Argument)
 
 
 def auto_cli(

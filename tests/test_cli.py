@@ -10,6 +10,7 @@ from coleo import (
     auto_cli,
     catalogue,
     default,
+    setvars,
     tag,
     tooled,
 )
@@ -414,3 +415,8 @@ def badbadbad():
 def test_bad_special():
     with pytest.raises(Exception):
         auto_cli(badbadbad, (), argv=["hello"])
+
+
+def test_setvars():
+    with setvars(z=3, w=10):
+        assert stout(3) == (16, 8)
