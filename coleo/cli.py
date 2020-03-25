@@ -348,7 +348,10 @@ def auto_cli(
     )
     _auto_cli_helper(parser, entry, tag=tag, eval_env=eval_env)
     opts = parse_options(parser, argv=argv, expand=expand)
-    cfg, fn = getattr(opts, "#cfg")
+    cfg, fn = getattr(opts, "#cfg", (None, None))
+    if cfg is None:
+        parser.print_help()
+        sys.exit(1)
     with cfg(opts):
         result = fn(*args)
         if print_result and result is not None:

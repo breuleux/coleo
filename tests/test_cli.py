@@ -329,6 +329,14 @@ def test_subcommands():
         == "wave"
     )
 
+    # Test with no arguments
+    with pytest.raises(SystemExit) as exc:
+        assert (
+            auto_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="",)
+            == "xyz"
+        )
+    assert exc.value.code == 1
+
 
 def test_config_subcommands(tmpdir):
     cfg1 = tmpdir.join("config1.json")
