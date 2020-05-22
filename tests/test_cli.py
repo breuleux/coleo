@@ -433,8 +433,46 @@ def multipos():
 
 
 def test_multiple_positional():
+    assert auto_cli(multipos, (), argv=["hello", "there"]) == ("there", "hello")
+
+
+@tooled
+def scattered_multipos():
+    # [positional]
+    three: tag.Argument
+    return multipos()
+
+
+@tooled
+def scattered_multipos2():
+    # [positional]
+    two: tag.Argument
+    return multipos()
+
+
+def test_multiple_positional_bad():
     with pytest.raises(Exception):
-        auto_cli(multipos, (), argv=["hello", "there"])
+        auto_cli(scattered_multipos, (), argv=["hello", "there"])
+    with pytest.raises(Exception):
+        auto_cli(scattered_multipos2, (), argv=["hello", "there"])
+
+
+@tooled
+def leftovers():
+    # [positional]
+    one: tag.Argument
+    # [remainder]
+    nomnom: tag.Argument
+    return nomnom
+
+
+def test_leftovers():
+    assert auto_cli(leftovers, (), argv=["hello", "there"]) == ["there"]
+    assert auto_cli(leftovers, (), argv="book".split()) == []
+    assert auto_cli(leftovers, (), argv="my --pear --orange".split()) == [
+        "--pear",
+        "--orange",
+    ]
 
 
 def test_setvars():

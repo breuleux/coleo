@@ -5,7 +5,7 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from itertools import count
-from types import FunctionType
+from types import FunctionType, SimpleNamespace
 
 from ptera import (
     ABSENT,
@@ -158,58 +158,117 @@ class Configurator:
         self.eval_env = eval_env
         self.expand = expand
 
-    def _fill_argparser(self):
-        has_positional = False
-        entries = list(sorted(list(self.names.items())))
-        for name, data in entries:
-            docs = set()
-            for fn, entry in data.items():
-                if entry["doc"]:
-                    docs.add(entry["doc"])
-                else:
-                    docs.add(f"Parameter in {fn}")
-
-            optname = name.replace("_", "-")
-            typ = []
-            for x in data.values():
-                ann = x["annotation"]
-                if isinstance(ann, TagSet):
-                    members = ann.members
-                else:
-                    members = [ann]
-                for m in members:
-                    if not isinstance(m, Tag):
-                        typ.append(m)
-            if len(typ) != 1:
-                typ = None
+    def _analyze_entry(self, name, data):
+        docs = set()
+        for fn, entry in data.items():
+            if entry["doc"]:
+                docs.add(entry["doc"])
             else:
-                (typ,) = typ
+                docs.add(f"Parameter in {fn}")
 
-            default_opt = f"--{optname}"
-            aliases = [default_opt]
-            nargs = False
-            optdoc = []
-            for entry in docs:
-                new_entry = []
-                for line in entry.split("\n"):
-                    m = re.match(r"\[([A-Za-z0-9_-]+)(:.*)?\]", line)
-                    if m:
-                        command, arg = m.groups()
-                        command = command.lower()
-                        arg = arg and arg[1:].strip()
-                        if command in ["alias", "aliases"]:
-                            aliases.extend(re.split(r"[ ,;]+", arg))
-                        elif command in ["option", "options"]:
-                            aliases = re.split(r"[ ,;]+", arg)
-                        elif command == "positional":
-                            nargs = arg or None
-                            try:
-                                nargs = int(nargs)
-                            except Exception:
-                                pass
-                    else:
-                        new_entry.append(line)
-                optdoc.append("\n".join(new_entry))
+        loc = None
+        if len(data) == 1:
+            (sole_data,) = list(data.values())
+            loc = sole_data["location"]
+
+        optname = name.replace("_", "-")
+        typ = []
+        for x in data.values():
+            ann = x["annotation"]
+            if isinstance(ann, TagSet):
+                members = ann.members
+            else:
+                members = [ann]
+            for m in members:
+                if not isinstance(m, Tag):
+                    typ.append(m)
+        if len(typ) != 1:
+            typ = None
+        else:
+            (typ,) = typ
+
+        default_opt = f"--{optname}"
+        aliases = [default_opt]
+        nargs = False
+        optdoc = []
+        for entry in docs:
+            new_entry = []
+            for line in entry.split("\n"):
+                m = re.match(r"\[([A-Za-z0-9_-]+)(:.*)?\]", line)
+                if m:
+                    command, arg = m.groups()
+                    command = command.lower()
+                    arg = arg and arg[1:].strip()
+                    if command in ["alias", "aliases"]:
+                        aliases.extend(re.split(r"[ ,;]+", arg))
+                    elif command in ["option", "options"]:
+                        aliases = re.split(r"[ ,;]+", arg)
+                    elif command == "remainder":
+                        nargs = argparse.REMAINDER
+                    elif command == "positional":
+                        nargs = arg or None
+                        try:
+                            nargs = int(nargs)
+                        except Exception:
+                            pass
+                else:
+                    new_entry.append(line)
+            optdoc.append("\n".join(new_entry))
+
+        return SimpleNamespace(
+            name=name,
+            optname=optname,
+            doc=optdoc,
+            nargs=nargs,
+            type=typ,
+            aliases=aliases,
+            loc=loc,
+            has_default_opt_name=(aliases[0] == default_opt),
+        )
+
+    def _fill_argparser(self):
+        entries = [
+            self._analyze_entry(name, data) for name, data in self.names.items()
+        ]
+
+        positional = list(
+            sorted(
+                (entry for entry in entries if entry.nargs is not False),
+                key=lambda entry: entry.loc[-1] if entry.loc else -1,
+            )
+        )
+        if len(positional) > 1:
+            if any(entry.loc is None for entry in positional):
+                raise Exception(
+                    "Positional arguments cannot be defined in multiple"
+                    " functions."
+                )
+            loc0 = positional[0].loc[:2]
+            if not all(
+                entry.loc is not None and entry.loc[:2] == loc0
+                for entry in positional
+            ):
+                raise Exception(
+                    "All positional arguments must be defined in the same"
+                    " function."
+                )
+
+        nonpositional = list(
+            sorted(
+                (entry for entry in entries if entry.nargs is False),
+                key=lambda entry: entry.name,
+            )
+        )
+
+        entries = positional + nonpositional
+
+        for entry in entries:
+            name = entry.name
+            typ = entry.type
+            aliases = entry.aliases
+            nargs = entry.nargs
+            optdoc = entry.doc
+            optname = entry.optname
 
             if typ is bool:
                 group = self.argparser.add_mutually_exclusive_group()
@@ -219,7 +278,7 @@ class Configurator:
                     action="store_true",
                     help="; ".join(optdoc),
                 )
-                if aliases[0] == default_opt:
+                if entry.has_default_opt_name:
                     group.add_argument(
                         f"--no-{optname}",
                         dest=name,
@@ -228,12 +287,6 @@ class Configurator:
                     )
             else:
                 if nargs is not False:
-                    if has_positional:
-                        raise Exception(
-                            "Only one positional argument or group of "
-                            "arguments is allowed."
-                        )
-                    has_positional = True
                     self.argparser.add_argument(
                         name,
                         type=self.resolver(typ or None),
