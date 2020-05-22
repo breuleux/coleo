@@ -49,7 +49,17 @@ def thingy():
 
 
 def test_catalogue():
-    assert catalogue(lager) == {
+    def _catalogue(root):
+        cat = catalogue(root)
+        return {
+            fn: {
+                k: {"annotation": v["annotation"], "doc": v["doc"]}
+                for k, v in fvars.items()
+            }
+            for fn, fvars in cat.items()
+        }
+
+    assert _catalogue(lager) == {
         lager: {
             "Argument": {"annotation": ABSENT, "doc": None},
             "tag": {"annotation": ABSENT, "doc": None},
@@ -63,8 +73,8 @@ def test_catalogue():
         },
     }
 
-    assert catalogue(stout) == {
-        **catalogue(lager),
+    assert _catalogue(stout) == {
+        **_catalogue(lager),
         stout: {
             "Argument": {"annotation": ABSENT, "doc": None},
             "int": {"annotation": ABSENT, "doc": None},
