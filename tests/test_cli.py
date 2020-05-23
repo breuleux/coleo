@@ -412,6 +412,10 @@ def reverso():
 
 def test_positional():
     assert auto_cli(groot, (), argv=["Marcel"]) == "Grootings, Marcel!"
+
+    with pytest.raises(SystemExit):
+        auto_cli(groot, (), argv=[])
+
     assert auto_cli(translate, (), argv=["4", "7"]) == [4, 7]
 
     with pytest.raises(SystemExit):
@@ -421,6 +425,7 @@ def test_positional():
         auto_cli(translate, (), argv=["4", "7", "8"])
 
     assert auto_cli(reverso, (), argv=list("goomba")) == list("abmoog")
+    assert auto_cli(reverso, (), argv=[]) == []
 
 
 @tooled

@@ -293,6 +293,7 @@ class Configurator:
                         action="store",
                         nargs=nargs,
                         metavar=name.upper(),
+                        default=[] if nargs == "*" else None,
                         help="; ".join(optdoc),
                     )
                 else:
