@@ -131,6 +131,8 @@ class ArgsExpander:
 def parse_options(parser, *, argv=None, expand=None):
     if isinstance(argv, argparse.Namespace):
         args = argv
+    elif isinstance(argv, dict):
+        args = argparse.Namespace(**argv)
     else:
         argv = sys.argv[1:] if argv is None else argv
         if expand:
@@ -402,6 +404,7 @@ def auto_cli(
     eval_env=None,
     expand=None,
     print_result=True,
+    return_split=False,
 ):
     if expand is None or isinstance(expand, str):
         expand = ArgsExpander(prefix=expand or "", default_file=None,)
@@ -416,8 +419,15 @@ def auto_cli(
     if cfg is None:
         parser.print_help()
         sys.exit(1)
-    with cfg(opts):
-        result = fn(*args)
-        if print_result and result is not None:
-            print(result)
-        return result
+
+    def thunk(opts=opts, args=args):
+        with cfg(opts):
+            result = fn(*args)
+            if print_result and result is not None:
+                print(result)
+            return result
+
+    if return_split:
+        return opts, thunk
+    else:
+        return thunk(opts)
