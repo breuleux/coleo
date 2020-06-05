@@ -190,6 +190,8 @@ class Configurator:
         default_opt = f"--{optname}"
         aliases = [default_opt]
         nargs = False
+        positional = False
+        metavar = None
         optdoc = []
         for entry in docs:
             new_entry = []
@@ -203,9 +205,13 @@ class Configurator:
                         aliases.extend(re.split(r"[ ,;]+", arg))
                     elif command in ["option", "options"]:
                         aliases = re.split(r"[ ,;]+", arg)
+                    elif command == "metavar":
+                        metavar = arg
                     elif command == "remainder":
+                        positional = True
                         nargs = argparse.REMAINDER
-                    elif command == "positional":
+                    elif command in ["nargs", "positional"]:
+                        positional = command == "positional"
                         nargs = arg or None
                         try:
                             nargs = int(nargs)
@@ -216,6 +222,8 @@ class Configurator:
             optdoc.append("\n".join(new_entry))
 
         return SimpleNamespace(
+            positional=positional,
+            metavar=metavar,
             name=name,
             optname=optname,
             doc=optdoc,
@@ -233,7 +241,7 @@ class Configurator:
 
         positional = list(
             sorted(
-                (entry for entry in entries if entry.nargs is not False),
+                (entry for entry in entries if entry.positional),
                 key=lambda entry: entry.loc[-1] if entry.loc else -1,
             )
         )
@@ -255,7 +263,7 @@ class Configurator:
 
         nonpositional = list(
             sorted(
-                (entry for entry in entries if entry.nargs is False),
+                (entry for entry in entries if not entry.positional),
                 key=lambda entry: entry.name,
             )
         )
@@ -286,7 +294,7 @@ class Configurator:
                         help=f"Set --{optname} to False",
                     )
             else:
-                if nargs is not False:
+                if entry.positional:
                     self.argparser.add_argument(
                         name,
                         type=self.resolver(typ or None),
@@ -303,7 +311,8 @@ class Configurator:
                         argparse.FileType: "FILE",
                     }
                     ttyp = typ if isinstance(typ, type) else type(typ)
-                    mv = _metavars.get(ttyp, "VALUE")
+                    mv = entry.metavar or _metavars.get(ttyp, "VALUE")
+                    nargs_kw = {"nargs": nargs} if nargs else {}
                     self.argparser.add_argument(
                         *aliases,
                         dest=name,
@@ -311,6 +320,7 @@ class Configurator:
                         action="store",
                         metavar=mv,
                         help="; ".join(optdoc),
+                        **nargs_kw,
                     )
 
     def resolver(self, typ):

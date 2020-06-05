@@ -30,6 +30,7 @@ def stout(v):
     # Double me
     w: Argument & int = default(1)
     # This is your cue
+    # [metavar: CUE]
     q: Argument & int = 2
     a = lager(v, w)
     b = lager(v, q)
@@ -82,7 +83,10 @@ def test_catalogue():
                 "annotation": tag.Argument & int,
                 "doc": "Double you,\nDouble me",
             },
-            "q": {"annotation": tag.Argument & int, "doc": "This is your cue"},
+            "q": {
+                "annotation": tag.Argument & int,
+                "doc": "This is your cue\n[metavar: CUE]",
+            },
             "a": {"annotation": ABSENT, "doc": None},
             "b": {"annotation": ABSENT, "doc": None},
             "default": {"annotation": ABSENT, "doc": None},
@@ -478,6 +482,32 @@ def test_leftovers():
         "--pear",
         "--orange",
     ]
+
+
+@tooled
+def ice_cream():
+    # [nargs: 2]
+    duo: tag.Argument & int
+
+    # [nargs: *]
+    tang: tag.Argument & int
+
+    return duo, tang
+
+
+def test_nargs():
+    assert auto_cli(ice_cream, (), argv="--duo 1 2 --tang".split()) == (
+        [1, 2],
+        [],
+    )
+    assert auto_cli(ice_cream, (), argv="--tang --duo 1 2".split()) == (
+        [1, 2],
+        [],
+    )
+    assert auto_cli(ice_cream, (), argv="--duo 1 2 --tang 3 4 5".split()) == (
+        [1, 2],
+        [3, 4, 5],
+    )
 
 
 def test_setvars():
