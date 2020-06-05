@@ -9,7 +9,7 @@ repository = "https://github.com/breuleux/coleo"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-ptera = "^0.2.2"
+ptera = "^0.2.3"
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

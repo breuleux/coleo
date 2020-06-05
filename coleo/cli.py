@@ -18,7 +18,7 @@ from ptera import (
     tag,
     tooled,
 )
-from ptera.selfless import PreState
+from ptera.selfless import PreState, PteraNameError
 
 from .config import ConfigFile
 
@@ -223,7 +223,7 @@ class Configurator:
                     new_entry.append(line)
             optdoc.append("\n".join(new_entry))
 
-        return SimpleNamespace(
+        opts = SimpleNamespace(
             positional=positional,
             metavar=metavar,
             name=name,
@@ -235,6 +235,9 @@ class Configurator:
             loc=loc,
             has_default_opt_name=(aliases[0] == default_opt),
         )
+        for x in data.values():
+            x["coleo_options"] = opts
+        return opts
 
     def _fill_argparser(self):
         entries = [
@@ -422,7 +425,19 @@ def auto_cli(
 
     def thunk(opts=opts, args=args):
         with cfg(opts):
-            result = fn(*args)
+            try:
+                result = fn(*args)
+            except PteraNameError as err:
+                optinfo = err.info().get("coleo_options", None)
+                if optinfo:
+                    optname = optinfo.aliases[0]
+                    print(
+                        f"error: missing value for required argument: {optname}",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                else:
+                    raise
             if print_result and result is not None:
                 print(result)
             return result

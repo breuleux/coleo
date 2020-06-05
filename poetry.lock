@@ -206,7 +206,7 @@ description = "Call graph addressing library."
 name = "ptera"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "0.2.2"
+version = "0.2.3"
 
 [[package]]
 category = "dev"
@@ -246,7 +246,7 @@ description = "pytest: simple powerful testing with Python"
 name = "pytest"
 optional = false
 python-versions = ">=3.5"
-version = "5.4.2"
+version = "5.4.3"
 
 [package.dependencies]
 atomicwrites = ">=1.0"
@@ -357,11 +357,11 @@ pyproject = ["toml"]
 
 [[package]]
 category = "dev"
-description = "Measures number of Terminal column cells of wide-character codes"
+description = "Measures the displayed width of unicode strings in a terminal"
 name = "wcwidth"
 optional = false
 python-versions = "*"
-version = "0.1.9"
+version = "0.2.3"
 
 [[package]]
 category = "dev"
@@ -377,7 +377,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "29474ecd64d1fd6c9dac9cbc478706439608fa41e849d1fad9d1510fbc32e131"
+content-hash = "f345ab6d8ed7c01abff17b0acd6e5857121bd4d5df8fca1f50b0f68621bda1e4"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -479,8 +479,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 ptera = [
-    {file = "ptera-0.2.2-py3-none-any.whl", hash = "sha256:d11f7de7bcce38a5bfbec7f22d8faf3f8221646b336008f57255241cfdf3eca8"},
-    {file = "ptera-0.2.2.tar.gz", hash = "sha256:8666db520d7303413b75d74a79e33eba30ff76e45d45ccb5d3dd4d40b94a7a0c"},
+    {file = "ptera-0.2.3-py3-none-any.whl", hash = "sha256:d7d847259c18d2812e376207e0ab299e11500b8919fb4b59aff306ba291dd12e"},
+    {file = "ptera-0.2.3.tar.gz", hash = "sha256:44b23b95596a52f9c11ebd317c3e4936fef58eef8d838c56e736e841e7e986a1"},
 ]
 py = [
     {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
@@ -499,8 +499,8 @@ pyparsing = [
     {file = "pyparsing-2.4.7.tar.gz", hash = "sha256:c203ec8783bf771a155b207279b9bccb8dea02d8f0c9e5f8ead507bc3246ecc1"},
 ]
 pytest = [
-    {file = "pytest-5.4.2-py3-none-any.whl", hash = "sha256:95c710d0a72d91c13fae35dce195633c929c3792f54125919847fdcdf7caa0d3"},
-    {file = "pytest-5.4.2.tar.gz", hash = "sha256:eb2b5e935f6a019317e455b6da83dd8650ac9ffd2ee73a7b657a30873d67a698"},
+    {file = "pytest-5.4.3-py3-none-any.whl", hash = "sha256:5c0db86b698e8f170ba4582a492248919255fcd4c79b1ee64ace34301fb589a1"},
+    {file = "pytest-5.4.3.tar.gz", hash = "sha256:7979331bfcba207414f5e1263b5a0f8f521d0f457318836a7355531ed1a4c7d8"},
 ]
 pytest-cov = [
     {file = "pytest-cov-2.9.0.tar.gz", hash = "sha256:b6a814b8ed6247bd81ff47f038511b57fe1ce7f4cc25b9106f1a4b106f1d9322"},
@@ -588,8 +588,8 @@ unimport = [
     {file = "unimport-0.2.62.tar.gz", hash = "sha256:23b4fe33179f012deda48713201fb04181548bdb1e1a3564f5ef233df690dbbd"},
 ]
 wcwidth = [
-    {file = "wcwidth-0.1.9-py2.py3-none-any.whl", hash = "sha256:cafe2186b3c009a04067022ce1dcd79cb38d8d65ee4f4791b8888d6599d1bbe1"},
-    {file = "wcwidth-0.1.9.tar.gz", hash = "sha256:ee73862862a156bf77ff92b09034fc4825dd3af9cf81bc5b360668d425f3c5f1"},
+    {file = "wcwidth-0.2.3-py2.py3-none-any.whl", hash = "sha256:980fbf4f3c196c0f329cdcd1e84c554d6a211f18e252e525a0cf4223154a41d6"},
+    {file = "wcwidth-0.2.3.tar.gz", hash = "sha256:edbc2b718b4db6cdf393eefe3a420183947d6aa312505ce6754516f458ff8830"},
 ]
 zipp = [
     {file = "zipp-3.1.0-py3-none-any.whl", hash = "sha256:aa36550ff0c0b7ef7fa639055d797116ee891440eac1a56f378e2d3179e0320b"},

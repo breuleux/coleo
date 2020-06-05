@@ -164,6 +164,19 @@ def test_conflict():
         auto_cli(stout, (3,), argv="--z=3 --q=10".split())
 
 
+def test_required_argument():
+    with pytest.raises(SystemExit):
+        auto_cli(lager, (3, 4), argv=[])
+
+
+def test_missing_global():
+    def wish():
+        return love
+
+    with pytest.raises(NameError):
+        auto_cli(wish, (), argv=[])
+
+
 def patriotism():
     # Whether to wave the flag or not
     # [aliases: -f --yay]
