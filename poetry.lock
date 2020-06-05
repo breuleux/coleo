@@ -206,7 +206,7 @@ description = "Call graph addressing library."
 name = "ptera"
 optional = false
 python-versions = ">=3.7,<4.0"
-version = "0.2.1"
+version = "0.2.2"
 
 [[package]]
 category = "dev"
@@ -479,8 +479,8 @@ pluggy = [
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
 ]
 ptera = [
-    {file = "ptera-0.2.1-py3-none-any.whl", hash = "sha256:b48191fda04d945e6e4a7a6b0c2fc95b66851bbdad2a55df40bc696e0abd7ae9"},
-    {file = "ptera-0.2.1.tar.gz", hash = "sha256:44dd52c16315744ec78563f696ed30787f03eebdfb1d5fa9eba287dd23bc839f"},
+    {file = "ptera-0.2.2-py3-none-any.whl", hash = "sha256:d11f7de7bcce38a5bfbec7f22d8faf3f8221646b336008f57255241cfdf3eca8"},
+    {file = "ptera-0.2.2.tar.gz", hash = "sha256:8666db520d7303413b75d74a79e33eba30ff76e45d45ccb5d3dd4d40b94a7a0c"},
 ]
 py = [
     {file = "py-1.8.1-py2.py3-none-any.whl", hash = "sha256:c20fdd83a5dbc0af9efd622bee9a5564e278f6380fffcacc43ba6f43db2813b0"},
