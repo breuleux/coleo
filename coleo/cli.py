@@ -303,7 +303,7 @@ class Configurator:
                 group = self.argparser
 
             if typ is bool:
-                if entry.negate is not None:
+                if group is self.argparser and entry.negate is not None:
                     group = self.argparser.add_mutually_exclusive_group()
 
                 group.add_argument(
