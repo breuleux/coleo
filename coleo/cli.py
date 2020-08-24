@@ -193,6 +193,8 @@ class Configurator:
         aliases = [default_opt]
         nargs = False
         positional = False
+        group = None
+        negate = None
         metavar = None
         optdoc = []
         for entry in docs:
@@ -207,6 +209,10 @@ class Configurator:
                         aliases.extend(re.split(r"[ ,;]+", arg))
                     elif command in ["option", "options"]:
                         aliases = re.split(r"[ ,;]+", arg)
+                    elif command == "group":
+                        group = arg
+                    elif command == "negate":
+                        negate = arg or True
                     elif command == "metavar":
                         metavar = arg
                     elif command == "remainder":
@@ -226,6 +232,8 @@ class Configurator:
         opts = SimpleNamespace(
             positional=positional,
             metavar=metavar,
+            negate=negate,
+            group=group,
             name=name,
             optname=optname,
             doc=optdoc,
@@ -240,6 +248,8 @@ class Configurator:
         return opts
 
     def _fill_argparser(self):
+        groups = {}
+
         entries = [
             self._analyze_entry(name, data) for name, data in self.names.items()
         ]
@@ -283,24 +293,38 @@ class Configurator:
             optdoc = entry.doc
             optname = entry.optname
 
+            if entry.group:
+                if entry.group not in groups:
+                    groups[entry.group] = self.argparser.add_argument_group(
+                        title=entry.group
+                    )
+                group = groups[entry.group]
+            else:
+                group = self.argparser
+
             if typ is bool:
-                group = self.argparser.add_mutually_exclusive_group()
+                if entry.negate is not None:
+                    group = self.argparser.add_mutually_exclusive_group()
+
                 group.add_argument(
                     *aliases,
                     dest=name,
                     action="store_true",
                     help="; ".join(optdoc),
                 )
-                if entry.has_default_opt_name:
+
+                if entry.negate is not None:
                     group.add_argument(
                         f"--no-{optname}",
                         dest=name,
                         action="store_false",
-                        help=f"Set --{optname} to False",
+                        help=f"Set --{optname} to False"
+                        if entry.negate is True
+                        else entry.negate,
                     )
             else:
                 if entry.positional:
-                    self.argparser.add_argument(
+                    group.add_argument(
                         name,
                         type=self.resolver(typ or None),
                         action="store",
@@ -318,7 +342,7 @@ class Configurator:
                     ttyp = typ if isinstance(typ, type) else type(typ)
                     mv = entry.metavar or _metavars.get(ttyp, "VALUE")
                     nargs_kw = {"nargs": nargs} if nargs else {}
-                    self.argparser.add_argument(
+                    group.add_argument(
                         *aliases,
                         dest=name,
                         type=self.resolver(typ or None),

@@ -45,6 +45,7 @@ def thing():
 
 @tooled
 def thingy():
+    # [group: puorg]
     arg: Argument
     return arg
 
@@ -179,6 +180,7 @@ def test_missing_global():
 
 def patriotism():
     # Whether to wave the flag or not
+    # [negate]
     # [aliases: -f --yay]
     flag: tag.Argument & bool = default(True)
     # [options: -n]

@@ -20,6 +20,8 @@ def guess():
     minimum: Argument & int = default(0)
     # Maximal possible number
     maximum: Argument & int = default(100)
+
+    # [group: whimsy]
     # Maximal number of tries
     maxtries: Argument & int = default(10)
 
