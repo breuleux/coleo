@@ -65,11 +65,11 @@ def main():
 
 **Boolean flags**
 
-If the type is bool, the option will take no argument, and the `--no-<optname>` option is added to negate the value. For example:
+If the type is bool, the option will take no argument, for example:
 
 ```python
 def main():
-    flag: Argument & bool
+    flag: Argument & bool = default(False)
     return "yes!" if flag else "no!"
 ```
 
@@ -78,9 +78,53 @@ Use it like this:
 ```bash
 $ python script.py --flag
 yes!
+$ python script.py
+no!
+```
+
+You can also *negate* the flag, meaning that you want to provide an option that will store False in the variable instead of True. For example:
+
+```python
+def main():
+    # [negate]
+    flag: Argument & bool = default(True)
+    return "yes!" if flag else "no!"
+```
+
+By default, the above will create a flag called `--no-<optname>`:
+
+```bash
+$ python script.py
+yes!
 $ python script.py --no-flag
 no!
 ```
+
+You can write `[negate: --xyz -n]` if you want the option to be `--xyz` or `-n`. This overrides the default `--no-flag` option.
+
+Note that using `[negate]` will remove `--flag`, because we assume that it is True by default and there is therefore no need for this option.
+
+If you wish, you can have both options that set the flag to True and others that set the flag to False, using `[false-options]`. You can optionally document these options with `[false-options-doc]` (if not provided, Coleo will use a sensible default):
+
+```python
+def main():
+    # Set the flag to True
+    # [options: -y]
+    # [false-options: -n]
+    # [false-options-doc: Set the flag to False]
+    flag: Argument & bool = default(None)
+    return flag
+```
+
+```bash
+$ python script.py
+None
+$ python script.py -y
+True
+$ python script.py -n
+False
+```
+
 
 **Files**
 

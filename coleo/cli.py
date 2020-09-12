@@ -194,6 +194,7 @@ class Configurator:
             positional=False,
             metavar=None,
             negate=None,
+            negate_doc=None,
             group=None,
             name=name,
             optname=optname,
@@ -216,11 +217,23 @@ class Configurator:
                     if command in ["alias", "aliases"]:
                         opts.aliases.extend(re.split(r"[ ,;]+", arg))
                     elif command in ["option", "options"]:
+                        arg = arg or ""
                         opts.aliases = re.split(r"[ ,;]+", arg)
                     elif command == "group":
                         opts.group = arg
                     elif command == "negate":
-                        opts.negate = arg or True
+                        if arg:
+                            opts.negate = re.split(r"[ ,;]+", arg)
+                        else:
+                            opts.negate = [f"--no-{optname}"]
+                        opts.aliases = []
+                    elif command == "false-options":
+                        if arg:
+                            opts.negate = re.split(r"[ ,;]+", arg)
+                        else:
+                            opts.negate = [f"--no-{optname}"]
+                    elif command == "false-options-doc":
+                        opts.negate_doc = arg
                     elif command == "metavar":
                         opts.metavar = arg
                     elif command == "action":
@@ -239,7 +252,9 @@ class Configurator:
                     new_entry.append(line)
             opts.doc.append("\n".join(new_entry))
 
-        opts.has_default_opt_name = (opts.aliases[0] == default_opt),
+        opts.has_default_opt_name = (
+            (opts.aliases and opts.aliases[0] == default_opt),
+        )
 
         for x in data.values():
             x["coleo_options"] = opts
@@ -289,7 +304,6 @@ class Configurator:
             aliases = entry.aliases
             nargs = entry.nargs
             optdoc = entry.doc
-            optname = entry.optname
 
             if entry.group:
                 if entry.group not in groups:
@@ -304,21 +318,26 @@ class Configurator:
                 if group is self.argparser and entry.negate is not None:
                     group = self.argparser.add_mutually_exclusive_group()
 
-                group.add_argument(
-                    *aliases,
-                    dest=name,
-                    action="store_true",
-                    help="; ".join(optdoc),
-                )
-
-                if entry.negate is not None:
+                if aliases:
                     group.add_argument(
-                        f"--no-{optname}",
+                        *aliases,
+                        dest=name,
+                        action="store_true",
+                        help="; ".join(optdoc),
+                    )
+
+                if entry.negate:
+                    if entry.negate_doc:
+                        doc = entry.negate_doc
+                    elif aliases:
+                        doc = f"Set {aliases[0]} to False"
+                    else:
+                        doc = "; ".join(optdoc)
+                    group.add_argument(
+                        *entry.negate,
                         dest=name,
                         action="store_false",
-                        help=f"Set --{optname} to False"
-                        if entry.negate is True
-                        else entry.negate,
+                        help=doc,
                     )
             else:
                 if entry.positional:

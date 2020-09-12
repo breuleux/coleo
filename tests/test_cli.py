@@ -180,7 +180,7 @@ def test_missing_global():
 
 def patriotism():
     # Whether to wave the flag or not
-    # [negate]
+    # [false-options]
     # [aliases: -f --yay]
     flag: tag.Argument & bool = default(True)
     # [options: -n]
@@ -558,7 +558,7 @@ def test_append():
         [],
     )
     with pytest.raises(SystemExit):
-        assert auto_cli(accum, (), argv=["--junk", "x", "y"]) == (["x"], [])
+        auto_cli(accum, (), argv=["--junk", "x", "y"])
 
     assert auto_cli(
         accum, (), argv=["--clusters", "x", "y", "--clusters", "z"]
@@ -566,3 +566,34 @@ def test_append():
     assert auto_cli(
         accum, (), argv=["--clusters", "x", "--junk", "y", "--clusters", "z"]
     ) == (["y"], [["x"], ["z"]])
+
+
+@tooled
+def boo():
+    # [negate: --clap]
+    # No jeering
+    jeer: Argument & bool = default(True)
+
+    # [negate]
+    # Lack of goodness
+    good: Argument & bool = default(True)
+
+    # Potato!
+    # [false-options: --famine]
+    # [false-options-doc: No potato]
+    potato: Argument & bool = default(None)
+
+    return jeer, good, potato
+
+
+def test_negate():
+    assert auto_cli(boo, (), argv=["--clap"]) == (False, True, None)
+    with pytest.raises(SystemExit):
+        auto_cli(boo, (), argv=["--jeer"])
+
+    assert auto_cli(boo, (), argv=["--no-good"]) == (True, False, None)
+    with pytest.raises(SystemExit):
+        auto_cli(boo, (), argv=["--good"])
+
+    assert auto_cli(boo, (), argv=["--potato"]) == (True, True, True)
+    assert auto_cli(boo, (), argv=["--famine"]) == (True, True, False)
