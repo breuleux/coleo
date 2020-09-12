@@ -196,6 +196,7 @@ class Configurator:
         group = None
         negate = None
         metavar = None
+        action = "store"
         optdoc = []
         for entry in docs:
             new_entry = []
@@ -215,6 +216,8 @@ class Configurator:
                         negate = arg or True
                     elif command == "metavar":
                         metavar = arg
+                    elif command == "action":
+                        action = arg
                     elif command == "remainder":
                         positional = True
                         nargs = argparse.REMAINDER
@@ -236,6 +239,7 @@ class Configurator:
             group=group,
             name=name,
             optname=optname,
+            action=action,
             doc=optdoc,
             nargs=nargs,
             type=typ,
@@ -327,7 +331,7 @@ class Configurator:
                     group.add_argument(
                         name,
                         type=self.resolver(typ or None),
-                        action="store",
+                        action=entry.action,
                         nargs=nargs,
                         metavar=name.upper(),
                         default=[] if nargs == "*" else None,
@@ -346,7 +350,7 @@ class Configurator:
                         *aliases,
                         dest=name,
                         type=self.resolver(typ or None),
-                        action="store",
+                        action=entry.action,
                         metavar=mv,
                         help="; ".join(optdoc),
                         **nargs_kw,

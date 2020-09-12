@@ -538,3 +538,31 @@ def test_nargs():
 def test_setvars():
     with setvars(z=3, w=10):
         assert stout(3) == (16, 8)
+
+
+@tooled
+def accum():
+    # [action: append]
+    junk: Argument = default([])
+
+    # [action: append]
+    # [nargs: +]
+    clusters: Argument = default([])
+
+    return junk, clusters
+
+
+def test_append():
+    assert auto_cli(accum, (), argv=["--junk", "x", "--junk", "y"]) == (
+        ["x", "y"],
+        [],
+    )
+    with pytest.raises(SystemExit):
+        assert auto_cli(accum, (), argv=["--junk", "x", "y"]) == (["x"], [])
+
+    assert auto_cli(
+        accum, (), argv=["--clusters", "x", "y", "--clusters", "z"]
+    ) == ([], [["x", "y"], ["z"]])
+    assert auto_cli(
+        accum, (), argv=["--clusters", "x", "--junk", "y", "--clusters", "z"]
+    ) == (["y"], [["x"], ["z"]])
