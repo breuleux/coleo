@@ -29,7 +29,7 @@ def formatter_yaml():
         import yaml
     except ModuleNotFoundError:  # pragma: no cover
         raise OSError(
-            "Please install the 'pyyaml' module to read '.yaml' files"
+            "Please install 'coleo[yaml]' to read '.yaml' files"
         )
     return {
         "load": yaml.full_load,
@@ -42,7 +42,7 @@ def formatter_toml():
     try:
         import toml
     except ModuleNotFoundError:  # pragma: no cover
-        raise OSError("Please install the 'toml' module to read '.toml' files")
+        raise OSError("Please install 'coleo[toml]' to read '.toml' files")
     return {
         "load": toml.load,
         "dump": toml.dump,

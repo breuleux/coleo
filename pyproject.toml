@@ -10,6 +10,8 @@ repository = "https://github.com/breuleux/coleo"
 [tool.poetry.dependencies]
 python = "^3.6"
 ptera = "^0.2.4"
+toml = {version = "^0.10.0", optional = true}
+pyyaml = {version = "^5.3", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"
@@ -18,8 +20,10 @@ pytest-cov = "^2.8.1"
 isort = "^4.3.21"
 flake8 = "^3.7.9"
 unimport = "^0.2.8"
-toml = "^0.10.0"
-pyyaml = "^5.3"
+
+[tool.poetry.extras]
+toml = ["toml"]
+yaml = ["pyyaml"]
 
 [tool.black]
 line-length = 80
