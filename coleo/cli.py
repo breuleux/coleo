@@ -447,7 +447,6 @@ def auto_cli(
     description=None,
     eval_env=None,
     expand=None,
-    print_result=True,
     return_split=False,
 ):
     if expand is None or isinstance(expand, str):
@@ -479,8 +478,6 @@ def auto_cli(
                     sys.exit(1)
                 else:
                     raise
-            if print_result and result is not None:
-                print(result)
             return result
 
     if return_split:
