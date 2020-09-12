@@ -190,14 +190,21 @@ class Configurator:
             (typ,) = typ
 
         default_opt = f"--{optname}"
-        aliases = [default_opt]
-        nargs = False
-        positional = False
-        group = None
-        negate = None
-        metavar = None
-        action = "store"
-        optdoc = []
+        opts = SimpleNamespace(
+            positional=False,
+            metavar=None,
+            negate=None,
+            group=None,
+            name=name,
+            optname=optname,
+            action="store",
+            doc=[],
+            nargs=False,
+            type=typ,
+            aliases=[default_opt],
+            loc=loc,
+        )
+
         for entry in docs:
             new_entry = []
             for line in entry.split("\n"):
@@ -207,46 +214,33 @@ class Configurator:
                     command = command.lower()
                     arg = arg and arg[1:].strip()
                     if command in ["alias", "aliases"]:
-                        aliases.extend(re.split(r"[ ,;]+", arg))
+                        opts.aliases.extend(re.split(r"[ ,;]+", arg))
                     elif command in ["option", "options"]:
-                        aliases = re.split(r"[ ,;]+", arg)
+                        opts.aliases = re.split(r"[ ,;]+", arg)
                     elif command == "group":
-                        group = arg
+                        opts.group = arg
                     elif command == "negate":
-                        negate = arg or True
+                        opts.negate = arg or True
                     elif command == "metavar":
-                        metavar = arg
+                        opts.metavar = arg
                     elif command == "action":
-                        action = arg
+                        opts.action = arg
                     elif command == "remainder":
-                        positional = True
-                        nargs = argparse.REMAINDER
+                        opts.positional = True
+                        opts.nargs = argparse.REMAINDER
                     elif command in ["nargs", "positional"]:
-                        positional = command == "positional"
-                        nargs = arg or None
+                        opts.positional = command == "positional"
+                        opts.nargs = arg or None
                         try:
-                            nargs = int(nargs)
+                            opts.nargs = int(opts.nargs)
                         except Exception:
                             pass
                 else:
                     new_entry.append(line)
-            optdoc.append("\n".join(new_entry))
+            opts.doc.append("\n".join(new_entry))
 
-        opts = SimpleNamespace(
-            positional=positional,
-            metavar=metavar,
-            negate=negate,
-            group=group,
-            name=name,
-            optname=optname,
-            action=action,
-            doc=optdoc,
-            nargs=nargs,
-            type=typ,
-            aliases=aliases,
-            loc=loc,
-            has_default_opt_name=(aliases[0] == default_opt),
-        )
+        opts.has_default_opt_name = (opts.aliases[0] == default_opt),
+
         for x in data.values():
             x["coleo_options"] = opts
         return opts
