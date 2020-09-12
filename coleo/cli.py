@@ -1,4 +1,5 @@
 import argparse
+import inspect
 import os
 import re
 import sys
@@ -403,7 +404,7 @@ def _getdoc(obj):
         return getattr(obj, "__doc__", None)
 
 
-def _auto_cli_helper(parser, entry, **kwargs):
+def _make_cli_helper(parser, entry, **kwargs):
     if isinstance(entry, dict):
         subparsers = parser.add_subparsers()
         for name, subentry in entry.items():
@@ -412,7 +413,7 @@ def _auto_cli_helper(parser, entry, **kwargs):
             subparser = subparsers.add_parser(
                 name, help=_getdoc(subentry), argument_default=argparse.SUPPRESS
             )
-            _auto_cli_helper(subparser, subentry)
+            _make_cli_helper(subparser, subentry)
     else:
         if isinstance(entry, FunctionType):
             entry = tooled(entry)
@@ -438,7 +439,7 @@ def setvars(**values):
     return _setvars(values, tag=Argument)
 
 
-def auto_cli(
+def make_cli(
     entry,
     args=(),
     *,
@@ -457,7 +458,7 @@ def auto_cli(
         description=description or _getdoc(entry),
         argument_default=argparse.SUPPRESS,
     )
-    _auto_cli_helper(parser, entry, tag=tag, eval_env=eval_env)
+    _make_cli_helper(parser, entry, tag=tag, eval_env=eval_env)
     opts = parse_options(parser, argv=argv, expand=expand)
     cfg, fn = getattr(opts, "#cfg", (None, None))
     if cfg is None:
@@ -481,7 +482,39 @@ def auto_cli(
                     raise
             return result
 
-    if return_split:
-        return opts, thunk
-    else:
-        return thunk(opts)
+    return opts, thunk
+
+
+def run_cli(*args, **kwargs):
+    opts, thunk = make_cli(*args, **kwargs)
+    return thunk(opts)
+
+
+def _cls_to_struct(cls):
+    structure = {"__doc__": cls.__doc__}
+    for method_name, method in vars(cls).items():
+        if inspect.isfunction(method):
+            tmethod = tooled(method)
+            setattr(cls, method_name, tmethod)
+            structure[method_name] = tmethod
+        elif inspect.isclass(method):
+            structure[method_name] = _cls_to_struct(method)
+    return structure
+
+
+def auto_cli(fn):  # pragma: no cover
+    if inspect.isfunction(fn):
+        tfn = tooled(fn)
+        if fn.__globals__["__name__"] == "__main__":
+            result = run_cli(tfn)
+            if result is not None:
+                print(result)
+        return tfn
+
+    elif inspect.isclass(fn):
+        structure = _cls_to_struct(fn)
+        if fn.__module__ == "__main__":
+            result = run_cli(structure)
+            if result is not None:
+                print(result)
+        return fn

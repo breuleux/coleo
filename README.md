@@ -14,6 +14,7 @@ First, define a command line interface as follows:
 ```python
 from coleo import Argument, auto_cli, default
 
+@auto_cli
 def main():
     # The greeting
     greeting: Argument = default("Hello")
@@ -22,9 +23,6 @@ def main():
     name: Argument = default("you")
 
     return f"{greeting}, {name}!"
-
-if __name__ == "__main__":
-    auto_cli(main)
 ```
 
 Then you may run it like this on the command line:
@@ -55,6 +53,7 @@ optional arguments:
 By default, all arguments are interpreted as strings, but you can easily give a different type to an argument:
 
 ```python
+@auto_cli
 def main():
     # This argument will be converted to an int
     x: Argument & int
@@ -68,6 +67,7 @@ def main():
 If the type is bool, the option will take no argument, for example:
 
 ```python
+@auto_cli
 def main():
     flag: Argument & bool = default(False)
     return "yes!" if flag else "no!"
@@ -85,6 +85,7 @@ no!
 You can also *negate* the flag, meaning that you want to provide an option that will store False in the variable instead of True. For example:
 
 ```python
+@auto_cli
 def main():
     # [negate]
     flag: Argument & bool = default(True)
@@ -107,6 +108,7 @@ Note that using `[negate]` will remove `--flag`, because we assume that it is Tr
 If you wish, you can have both options that set the flag to True and others that set the flag to False, using `[false-options]`. You can optionally document these options with `[false-options-doc]` (if not provided, Coleo will use a sensible default):
 
 ```python
+@auto_cli
 def main():
     # Set the flag to True
     # [options: -y]
@@ -131,6 +133,7 @@ False
 Use `coleo.FileType` (or `argparse.FileType`, it's the same thing) to open a file to read from or to write to:
 
 ```python
+@auto_cli
 def main():
     grocery_list: Argument & coleo.FileType("r")
     with grocery_list as f:
@@ -143,6 +146,7 @@ def main():
 You can manipulate configuration files with `coleo.config` or `coleo.ConfigFile`:
 
 ```python
+@auto_cli
 def main():
     # ConfigFile lets you read or write a configuration file
     book: Argument & ConfigFile
@@ -172,6 +176,7 @@ Supported extensions are `json`, `yaml` and `toml` (the latter two require insta
 Any function can be used as a "type" for an argument. So for example, if you want to be able to provide lists and dictionaries on the command line you can simply use `json.loads` (although `coleo.config` is usually better, because it can also read files, in various formats):
 
 ```python
+@auto_cli
 def main():
     obj: Argument & json.loads
     return type(obj).__name__
@@ -189,6 +194,7 @@ dict
 If you're feeling super feisty and care nothing about safety, you can even use `eval`:
 
 ```python
+@auto_cli
 def main():
     obj: Argument & eval
     return type(obj).__name__
@@ -207,6 +213,7 @@ function
 Using comments of the form `# [<instruction>: <args ...>]` you can customize the option parser:
 
 ```python
+@auto_cli
 def main():
     # This argument can be given as either --greeting or -g
     # [alias: -g]
@@ -258,40 +265,34 @@ The following customizations are available:
 
 ## Subcommands
 
-You can create an interface with a hierarchy of subcommands by passing a dictionary to `auto_cli`:
+You can create an interface with a hierarchy of subcommands by decorating a class with `auto_cli`:
 
 ```python
-def add():
-    x: Argument & int
-    y: Argument & int
-    return x + y
+@auto_cli
+class main:
+    class calc:
+        def add():
+            x: Argument & int
+            y: Argument & int
+            return x + y
 
-def mul():
-    x: Argument & int
-    y: Argument & int
-    return x * y
+        def mul():
+            x: Argument & int
+            y: Argument & int
+            return x * y
 
-def pow():
-    base: Argument & int
-    exponent: Argument & int
-    return base ** exponent
+        def pow():
+            base: Argument & int
+            exponent: Argument & int
+            return base ** exponent
 
-def greet():
-    greeting: Argument = default("Hello")
-    name: Argument = default("you")
-    return f"{greeting}, {name}!"
-
-if __name__ == "__main__":
-    auto_cli({
-        "calc": {
-            "__doc__": "Calculate something!",
-            "add": add,
-            "mul": mul,
-            "pow": pow,
-        },
-        "greet": greet,
-    })
+    def greet():
+        greeting: Argument = default("Hello")
+        name: Argument = default("you")
+        return f"{greeting}, {name}!"
 ```
+
+The class only holds structure and will never be instantiated, so don't add `self` to the argument lists for these functions.
 
 Then you may use it like this:
 
@@ -308,7 +309,7 @@ $ python multi.py calc add --x=3 --y=8
 It is possible to share behavior and arguments between subcommands, or to split complex functionality into multiple pieces. For example, maybe multiple subcommands in your application require an API key, which can either be given on the command line or can be read from a file. This is how you would share this behavior across all subcommands:
 
 ```python
-from coleo import Argument, auto_cli, default, tooled
+from coleo import Argument, auto_cli, config, default, tooled
 
 @tooled
 def apikey():
@@ -320,18 +321,17 @@ def apikey():
         key = config("~/.config/myapp/config.json")["key"]
     return key
 
-def search():
-    interface = Application(apikey())
-    query: Argument
-    return interface.search(query)
+@auto_cli
+class main:
+    def search():
+        interface = Application(apikey())
+        query: Argument
+        return interface.search(query)
 
-def install():
-    interface = Application(apikey())
-    package: Argument
-    return interface.install(package)
-
-if __name__ == "__main__":
-    auto_cli({"search": search, "install": install})
+    def install():
+        interface = Application(apikey())
+        package: Argument
+        return interface.install(package)
 ```
 
 If a function is decorated with `@tooled` and is called from one of the main functions (or from another tooled function), Coleo will search for arguments in that function too. Thus any subcommand that calls `apikey()` will gain a `--key` option.
@@ -350,6 +350,32 @@ key = config(config_path)["key"]
 ```
 
 And that `config_path` argument could, of course, be declared in any other function that needs to read some configuration value.
+
+
+## run_cli
+
+```python
+@auto_cli
+def main():
+    x: Argument
+    return x
+```
+
+Is equivalent to:
+
+```python
+@tooled
+def main():
+    x: Argument
+    return x
+
+if __name__ == "__main__":
+    result = run_cli(main)
+    if result is not None:
+        print(result)
+```
+
+`@auto_cli` on a class is equivalent to passing a dictionary to `run_cli` (use the special `__doc__` key to provide documentation).
 
 
 ## Non-CLI usage

@@ -7,9 +7,10 @@ from coleo import (
     ArgsExpander,
     Argument,
     ConflictError,
-    auto_cli,
     catalogue,
     default,
+    make_cli,
+    run_cli,
     setvars,
     tag,
     tooled,
@@ -102,39 +103,37 @@ def test_catalogue():
 @one_test_per_assert
 def test_cli():
     assert (
-        auto_cli(
+        run_cli(
             lager, ("a", "b"), argv="--z=:foo".split(), eval_env={"foo": "c"},
         )
         == "abc"
     )
-    assert auto_cli(lager, (3, 2), argv="--z=:math:cos(0)".split(),) == 6
-    assert auto_cli(stout, (3,), argv="--z=3".split()) == (7, 8)
-    assert auto_cli(stout, (3,), argv="--z=3 --w=10".split()) == (16, 8)
-    assert auto_cli(stout, (3,), tag=tag.Bargument, argv="--z=3".split()) == (
+    assert run_cli(lager, (3, 2), argv="--z=:math:cos(0)".split(),) == 6
+    assert run_cli(stout, (3,), argv="--z=3".split()) == (7, 8)
+    assert run_cli(stout, (3,), argv="--z=3 --w=10".split()) == (16, 8)
+    assert run_cli(stout, (3,), tag=tag.Bargument, argv="--z=3".split()) == (
         7,
         8,
     )
 
-    assert auto_cli(thingy, (), argv=["--arg", "1"]) == "1"
-    assert auto_cli(thingy, (), argv=["--arg", "xyz"]) == "xyz"
+    assert run_cli(thingy, (), argv=["--arg", "1"]) == "1"
+    assert run_cli(thingy, (), argv=["--arg", "xyz"]) == "xyz"
     assert (
-        auto_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"],)
+        run_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"],)
         == "bar"
     )
-    assert auto_cli(
+    assert run_cli(
         thingy, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"],
     ) == [1, 2, 3]
 
     assert (
-        auto_cli(
-            thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"],
-        )
+        run_cli(thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"],)
         == ":foo"
     )
 
 
-def test_cli_split():
-    opts, thunk = auto_cli(stout, (3,), argv="--z=3".split(), return_split=True)
+def test_make_cli():
+    opts, thunk = make_cli(stout, (3,), argv="--z=3".split(), return_split=True)
     opts = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
     assert opts == {"z": 3}
     assert thunk() == (7, 8)
@@ -145,29 +144,29 @@ def test_cli_split():
 
 def test_no_env():
     with pytest.raises(Exception):
-        auto_cli(
+        run_cli(
             lager, ("a", "b"), argv="--z=:foo".split(),
         )
 
 
 def test_unknown_argument():
     with pytest.raises(SystemExit) as exc:
-        auto_cli(stout, (3,), argv="--x=4".split())
+        run_cli(stout, (3,), argv="--x=4".split())
     assert exc.value.code == 2
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(stout, (3,), tag=tag.Bargument, argv="--z=3 --w=10".split())
+        run_cli(stout, (3,), tag=tag.Bargument, argv="--z=3 --w=10".split())
     assert exc.value.code == 2
 
 
 def test_conflict():
     with pytest.raises(ConflictError):
-        auto_cli(stout, (3,), argv="--z=3 --q=10".split())
+        run_cli(stout, (3,), argv="--z=3 --q=10".split())
 
 
 def test_required_argument():
     with pytest.raises(SystemExit):
-        auto_cli(lager, (3, 4), argv=[])
+        run_cli(lager, (3, 4), argv=[])
 
 
 def test_missing_global():
@@ -175,7 +174,7 @@ def test_missing_global():
         return love
 
     with pytest.raises(NameError):
-        auto_cli(wish, (), argv=[])
+        run_cli(wish, (), argv=[])
 
 
 def patriotism():
@@ -192,23 +191,23 @@ def patriotism():
 
 
 def test_types():
-    assert auto_cli(patriotism, (), argv=[]) == "wave"
-    assert auto_cli(patriotism, (), argv="-f".split()) == "wave"
-    assert auto_cli(patriotism, (), argv="--flag".split()) == "wave"
-    assert auto_cli(patriotism, (), argv="--no-flag".split()) == "don't wave"
+    assert run_cli(patriotism, (), argv=[]) == "wave"
+    assert run_cli(patriotism, (), argv="-f".split()) == "wave"
+    assert run_cli(patriotism, (), argv="--flag".split()) == "wave"
+    assert run_cli(patriotism, (), argv="--no-flag".split()) == "don't wave"
     assert (
-        auto_cli(patriotism, (), argv="--flag -n 3".split(),) == "wavewavewave"
+        run_cli(patriotism, (), argv="--flag -n 3".split(),) == "wavewavewave"
     )
     with pytest.raises(SystemExit) as exc:
-        auto_cli(patriotism, (), argv="--flag=1".split())
+        run_cli(patriotism, (), argv="--flag=1".split())
     assert exc.value.code == 2
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(patriotism, (), argv="--flag --times=3".split())
+        run_cli(patriotism, (), argv="--flag --times=3".split())
     assert exc.value.code == 2
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(patriotism, (), argv="-n ohno".split())
+        run_cli(patriotism, (), argv="-n ohno".split())
     assert exc.value.code == 2
 
 
@@ -216,41 +215,41 @@ def test_config_file(tmpdir):
     cfg1 = tmpdir.join("config1.json")
     cfg1.write(json.dumps({"z": 3, "w": 10}))
 
-    assert auto_cli(
+    assert run_cli(
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
     ) == (16, 8)
 
-    assert auto_cli(stout, (3,), argv=[f"@{cfg1.strpath}"], expand="@",) == (
+    assert run_cli(stout, (3,), argv=[f"@{cfg1.strpath}"], expand="@",) == (
         16,
         8,
     )
 
-    assert auto_cli(stout, (3,), argv=[f"&{cfg1.strpath}"], expand="@&",) == (
+    assert run_cli(stout, (3,), argv=[f"&{cfg1.strpath}"], expand="@&",) == (
         16,
         8,
     )
 
     cfg2 = tmpdir.join("config2.json")
     with pytest.raises(SystemExit) as exc:
-        auto_cli(
+        run_cli(
             stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@",
         )
     assert exc.value.code == 2
 
     cfg3 = tmpdir.join("config3.json")
     cfg3.write(json.dumps({"#include": cfg1.strpath, "w": 10}))
-    assert auto_cli(
+    assert run_cli(
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg3),
     ) == (16, 8)
 
-    assert auto_cli(stout, (3,), argv=[{"#include": cfg1.strpath}],) == (16, 8)
+    assert run_cli(stout, (3,), argv=[{"#include": cfg1.strpath}],) == (16, 8)
 
 
 def test_config_toml(tmpdir):
     cfg1 = tmpdir.join("config1.toml")
     cfg1.write("z = 3\nw = 10\n")
 
-    assert auto_cli(
+    assert run_cli(
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
     ) == (16, 8)
 
@@ -259,7 +258,7 @@ def test_config_cfg(tmpdir):
     cfg1 = tmpdir.join("config1.cfg")
     cfg1.write("[default]\nz = 3\nw = 10\n")
 
-    assert auto_cli(
+    assert run_cli(
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
     ) == (16, 8)
 
@@ -267,7 +266,7 @@ def test_config_cfg(tmpdir):
     cfg2.write("[ohno]\nz = 3\nw = 10\n")
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(
+        run_cli(
             stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@",
         )
     assert exc.value.code == 2
@@ -277,7 +276,7 @@ def test_config_yaml(tmpdir):
     cfg1 = tmpdir.join("config1.yaml")
     cfg1.write("z: 3\nw: 10\n")
 
-    assert auto_cli(
+    assert run_cli(
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
     ) == (16, 8)
 
@@ -287,30 +286,30 @@ def test_config_unknown(tmpdir):
     cfg1.write("z: 3\nw: 10\n")
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(
+        run_cli(
             stout, (3,), argv=f"@{cfg1.strpath}".split(), expand="@",
         )
     assert exc.value.code == 2
 
 
 def test_config_dict():
-    assert auto_cli(stout, (3,), argv=[{"z": 3, "w": 10}],) == (16, 8)
+    assert run_cli(stout, (3,), argv=[{"z": 3, "w": 10}],) == (16, 8)
 
     assert (
-        auto_cli(patriotism, (), argv=[{"flag": True, "-n": 2}],) == "wavewave"
+        run_cli(patriotism, (), argv=[{"flag": True, "-n": 2}],) == "wavewave"
     )
 
-    assert auto_cli(patriotism, (), argv=[{"flag": False}],) == "don't wave"
+    assert run_cli(patriotism, (), argv=[{"flag": False}],) == "don't wave"
 
 
 def test_bad_entry():
     with pytest.raises(TypeError):
-        auto_cli([patriotism], (), argv="--flag")
+        run_cli([patriotism], (), argv="--flag")
 
 
 def test_subcommands():
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv="thingy --arg xyz".split(),
@@ -319,7 +318,7 @@ def test_subcommands():
     )
 
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv="patriotism --flag".split(),
@@ -328,7 +327,7 @@ def test_subcommands():
     )
 
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patri": {"otism": patriotism}},
             (),
             argv="patri otism --flag".split(),
@@ -337,7 +336,7 @@ def test_subcommands():
     )
 
     assert (
-        auto_cli(
+        run_cli(
             {
                 "thingy": thingy,
                 "patri": {
@@ -352,7 +351,7 @@ def test_subcommands():
     )
 
     with pytest.raises(SystemExit) as exc:
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv="thingy --flag".split(),
@@ -360,7 +359,7 @@ def test_subcommands():
     assert exc.value.code == 2
 
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv=["patriotism", {"flag": True}],
@@ -371,7 +370,7 @@ def test_subcommands():
     # Test with no arguments
     with pytest.raises(SystemExit) as exc:
         assert (
-            auto_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="",)
+            run_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="",)
             == "xyz"
         )
     assert exc.value.code == 1
@@ -382,7 +381,7 @@ def test_config_subcommands(tmpdir):
     cfg1.write(json.dumps({"flag": True}))
 
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv=f"patriotism @{cfg1.strpath}".split(),
@@ -393,7 +392,7 @@ def test_config_subcommands(tmpdir):
 
     cfg2 = tmpdir.join("config2.json")
     with pytest.raises(SystemExit) as exc:
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv=f"patriotism @{cfg2.strpath}".split(),
@@ -404,7 +403,7 @@ def test_config_subcommands(tmpdir):
     cfg3 = tmpdir.join("config1.json")
     cfg3.write(json.dumps({"#command": "patriotism", "flag": True}))
     assert (
-        auto_cli(
+        run_cli(
             {"thingy": thingy, "patriotism": patriotism},
             (),
             argv=f"@{cfg3.strpath}".split(),
@@ -440,21 +439,21 @@ def reverso():
 
 
 def test_positional():
-    assert auto_cli(groot, (), argv=["Marcel"]) == "Grootings, Marcel!"
+    assert run_cli(groot, (), argv=["Marcel"]) == "Grootings, Marcel!"
 
     with pytest.raises(SystemExit):
-        auto_cli(groot, (), argv=[])
+        run_cli(groot, (), argv=[])
 
-    assert auto_cli(translate, (), argv=["4", "7"]) == [4, 7]
-
-    with pytest.raises(SystemExit):
-        auto_cli(translate, (), argv=["4"])
+    assert run_cli(translate, (), argv=["4", "7"]) == [4, 7]
 
     with pytest.raises(SystemExit):
-        auto_cli(translate, (), argv=["4", "7", "8"])
+        run_cli(translate, (), argv=["4"])
 
-    assert auto_cli(reverso, (), argv=list("goomba")) == list("abmoog")
-    assert auto_cli(reverso, (), argv=[]) == []
+    with pytest.raises(SystemExit):
+        run_cli(translate, (), argv=["4", "7", "8"])
+
+    assert run_cli(reverso, (), argv=list("goomba")) == list("abmoog")
+    assert run_cli(reverso, (), argv=[]) == []
 
 
 @tooled
@@ -467,7 +466,7 @@ def multipos():
 
 
 def test_multiple_positional():
-    assert auto_cli(multipos, (), argv=["hello", "there"]) == ("there", "hello")
+    assert run_cli(multipos, (), argv=["hello", "there"]) == ("there", "hello")
 
 
 @tooled
@@ -486,9 +485,9 @@ def scattered_multipos2():
 
 def test_multiple_positional_bad():
     with pytest.raises(Exception):
-        auto_cli(scattered_multipos, (), argv=["hello", "there"])
+        run_cli(scattered_multipos, (), argv=["hello", "there"])
     with pytest.raises(Exception):
-        auto_cli(scattered_multipos2, (), argv=["hello", "there"])
+        run_cli(scattered_multipos2, (), argv=["hello", "there"])
 
 
 @tooled
@@ -501,9 +500,9 @@ def leftovers():
 
 
 def test_leftovers():
-    assert auto_cli(leftovers, (), argv=["hello", "there"]) == ["there"]
-    assert auto_cli(leftovers, (), argv="book".split()) == []
-    assert auto_cli(leftovers, (), argv="my --pear --orange".split()) == [
+    assert run_cli(leftovers, (), argv=["hello", "there"]) == ["there"]
+    assert run_cli(leftovers, (), argv="book".split()) == []
+    assert run_cli(leftovers, (), argv="my --pear --orange".split()) == [
         "--pear",
         "--orange",
     ]
@@ -521,15 +520,15 @@ def ice_cream():
 
 
 def test_nargs():
-    assert auto_cli(ice_cream, (), argv="--duo 1 2 --tang".split()) == (
+    assert run_cli(ice_cream, (), argv="--duo 1 2 --tang".split()) == (
         [1, 2],
         [],
     )
-    assert auto_cli(ice_cream, (), argv="--tang --duo 1 2".split()) == (
+    assert run_cli(ice_cream, (), argv="--tang --duo 1 2".split()) == (
         [1, 2],
         [],
     )
-    assert auto_cli(ice_cream, (), argv="--duo 1 2 --tang 3 4 5".split()) == (
+    assert run_cli(ice_cream, (), argv="--duo 1 2 --tang 3 4 5".split()) == (
         [1, 2],
         [3, 4, 5],
     )
@@ -553,17 +552,17 @@ def accum():
 
 
 def test_append():
-    assert auto_cli(accum, (), argv=["--junk", "x", "--junk", "y"]) == (
+    assert run_cli(accum, (), argv=["--junk", "x", "--junk", "y"]) == (
         ["x", "y"],
         [],
     )
     with pytest.raises(SystemExit):
-        auto_cli(accum, (), argv=["--junk", "x", "y"])
+        run_cli(accum, (), argv=["--junk", "x", "y"])
 
-    assert auto_cli(
+    assert run_cli(
         accum, (), argv=["--clusters", "x", "y", "--clusters", "z"]
     ) == ([], [["x", "y"], ["z"]])
-    assert auto_cli(
+    assert run_cli(
         accum, (), argv=["--clusters", "x", "--junk", "y", "--clusters", "z"]
     ) == (["y"], [["x"], ["z"]])
 
@@ -587,13 +586,13 @@ def boo():
 
 
 def test_negate():
-    assert auto_cli(boo, (), argv=["--clap"]) == (False, True, None)
+    assert run_cli(boo, (), argv=["--clap"]) == (False, True, None)
     with pytest.raises(SystemExit):
-        auto_cli(boo, (), argv=["--jeer"])
+        run_cli(boo, (), argv=["--jeer"])
 
-    assert auto_cli(boo, (), argv=["--no-good"]) == (True, False, None)
+    assert run_cli(boo, (), argv=["--no-good"]) == (True, False, None)
     with pytest.raises(SystemExit):
-        auto_cli(boo, (), argv=["--good"])
+        run_cli(boo, (), argv=["--good"])
 
-    assert auto_cli(boo, (), argv=["--potato"]) == (True, True, True)
-    assert auto_cli(boo, (), argv=["--famine"]) == (True, True, False)
+    assert run_cli(boo, (), argv=["--potato"]) == (True, True, True)
+    assert run_cli(boo, (), argv=["--famine"]) == (True, True, False)

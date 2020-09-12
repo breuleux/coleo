@@ -9,6 +9,7 @@ Example usage:
 from coleo import Argument, auto_cli, default
 
 
+@auto_cli
 def main():
     # The greeting
     greeting: Argument = default("Hello")
@@ -17,7 +18,3 @@ def main():
     name: Argument = default("you")
 
     return f"{greeting}, {name}!"
-
-
-if __name__ == "__main__":
-    auto_cli(main)

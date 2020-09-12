@@ -45,14 +45,11 @@ def guess():
             print("Too high. Guess again.")
 
 
-@tooled
+@auto_cli
 def main():
+    """Guessing game"""
     # Number of rounds of guessing
     rounds: Argument & int = default(1)
 
     for i in range(rounds):
         guess()
-
-
-if __name__ == "__main__":
-    auto_cli(main, description="Guessing game")

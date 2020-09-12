@@ -28,9 +28,7 @@ def formatter_yaml():
     try:
         import yaml
     except ModuleNotFoundError:  # pragma: no cover
-        raise OSError(
-            "Please install 'coleo[yaml]' to read '.yaml' files"
-        )
+        raise OSError("Please install 'coleo[yaml]' to read '.yaml' files")
     return {
         "load": yaml.full_load,
         "dump": yaml.dump,
