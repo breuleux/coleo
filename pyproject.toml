@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "coleo"
-version = "0.1.7"
+version = "0.1.8"
 description = "The nicest way to develop a command-line interface"
 authors = ["Olivier Breuleux <breuleux@gmail.com>"]
 license = "MIT"
