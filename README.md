@@ -241,8 +241,19 @@ The following customizations are available:
   * `[positional: ?]`: one optional positional argument
   * `[positional: *]`: zero or more positional arguments
   * `[positional: +]`: one or more positional arguments
-
-It is currently not possible to define multiple arguments as positional, although you can simulate it by using e.g. `[positional: 2]` on a single argument to get a pair, and then you can get the elements of the list.
+* `[remainder]` represents all arguments that are not matched by the argument parser
+* `[nargs: n]` declares that the option takes n arguments
+  * `[nargs: ?]`: one optional argument
+  * `[nargs: *]`: zero or more arguments
+  * `[nargs: +]`: one or more arguments
+* `[action: <action>]` customizes the action to perform
+  * `[action: append]` lets you use an option multiple times, accumulating the results in a list (e.g. `python app.py -a 1 -a 2 -a 3`, would put `[1, 2, 3]` in `a`)
+* `[metavar: varname]` changes the variable name right after the option in the help string, e.g. `--opt METAVAR`
+* `[group: groupname]` puts the option in a named group. Options in the same group will appear together in the help.
+* For **bool** options only:
+    * `[negate: ...]` changes the option so that it sets the variable to False instead of True when they are given. Space/comma aliases may be provided for the option, otherwise the flag will be named `--no-<optname>`.
+    * `[false-options: ]` provide a list of options that set the flag to False.
+    * `[false-options-doc: ]` provide a documentation for the options given using the previous statement.
 
 
 ## Subcommands
