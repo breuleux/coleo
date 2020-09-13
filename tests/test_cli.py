@@ -413,6 +413,40 @@ def test_config_subcommands(tmpdir):
     )
 
 
+class farm:
+    def build():
+        material: tag.Argument
+        return f"built farm out of {material}"
+
+    class duck:
+        def honk():
+            repeat: tag.Argument & int = default(10)
+            return "honk" * repeat
+
+        def eat():
+            peas: tag.Argument & bool = default(False)
+            if peas:
+                return "nom nom nom"
+
+
+def test_subcommands_as_class():
+    assert (
+        run_cli(
+            farm,
+            argv=f"build --material wood".split()
+        )
+        == "built farm out of wood"
+    )
+
+    assert (
+        run_cli(
+            farm,
+            argv=f"duck honk --repeat 3".split()
+        )
+        == "honkhonkhonk"
+    )
+
+
 @tooled
 def groot():
     # Name to groot

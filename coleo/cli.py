@@ -414,6 +414,18 @@ def _make_cli_helper(parser, entry, **kwargs):
                 name, help=_getdoc(subentry), argument_default=argparse.SUPPRESS
             )
             _make_cli_helper(subparser, subentry)
+
+    elif inspect.isclass(entry):
+        structure = {"__doc__": entry.__doc__}
+        for name, entry2 in vars(entry).items():
+            if isinstance(entry2, FunctionType):
+                entry2 = tooled(entry2)
+                setattr(entry, name, entry2)
+                structure[name] = entry2
+            elif isinstance(entry2, (PteraFunction, dict, type)):
+                structure[name] = entry2
+        return _make_cli_helper(parser, structure, **kwargs)
+
     else:
         if isinstance(entry, FunctionType):
             entry = tooled(entry)
@@ -490,31 +502,10 @@ def run_cli(*args, **kwargs):
     return thunk(opts)
 
 
-def _cls_to_struct(cls):
-    structure = {"__doc__": cls.__doc__}
-    for method_name, method in vars(cls).items():
-        if inspect.isfunction(method):
-            tmethod = tooled(method)
-            setattr(cls, method_name, tmethod)
-            structure[method_name] = tmethod
-        elif inspect.isclass(method):
-            structure[method_name] = _cls_to_struct(method)
-    return structure
-
-
-def auto_cli(fn):  # pragma: no cover
+def auto_cli(fn, *args, **kwargs):  # pragma: no cover
     if inspect.isfunction(fn):
-        tfn = tooled(fn)
-        if fn.__globals__["__name__"] == "__main__":
-            result = run_cli(tfn)
-            if result is not None:
-                print(result)
-        return tfn
-
-    elif inspect.isclass(fn):
-        structure = _cls_to_struct(fn)
-        if fn.__module__ == "__main__":
-            result = run_cli(structure)
-            if result is not None:
-                print(result)
-        return fn
+        fn = tooled(fn)
+    result = run_cli(fn, *args, **kwargs)
+    if result is not None:
+        print(result)
+    return fn
