@@ -330,7 +330,7 @@ class main:
 
     def install():
         interface = Application(apikey())
-        package: Argument
+        package: Option
         return interface.install(package)
 ```
 
@@ -345,7 +345,7 @@ key = config("~/.config/myapp/config.json")["key"]
 
 # ==>
 
-config_path: Argument = default("~/.config/myapp/config.json")
+config_path: Option = default("~/.config/myapp/config.json")
 key = config(config_path)["key"]
 ```
 
@@ -355,40 +355,41 @@ And that `config_path` argument could, of course, be declared in any other funct
 ## run_cli
 
 ```python
+from coleo import Option, auto_cli
+
 @auto_cli
 def main():
-    x: Argument
+    x: Option
     return x
 ```
 
 Is equivalent to:
 
 ```python
+from coleo import Option, run_cli, tooled
+
 @tooled
 def main():
-    x: Argument
+    x: Option
     return x
 
-if __name__ == "__main__":
-    result = run_cli(main)
-    if result is not None:
-        print(result)
+result = run_cli(main)
+if result is not None:
+    print(result)
 ```
-
-`@auto_cli` on a class is equivalent to passing a dictionary to `run_cli` (use the special `__doc__` key to provide documentation).
 
 
 ## Non-CLI usage
 
-It is possible to set arguments without `auto_cli` with `setvars`:
+It is possible to set arguments without `auto_cli` using `setvars`:
 
 ```python
-from coleo import Argument, setvars, tooled
+from coleo import Option, setvars, tooled
 
 @tooled
 def greet():
-    greeting: Argument = default("Hello")
-    name: Argument = default("you")
+    greeting: Option = default("Hello")
+    name: Option = default("you")
     return f"{greeting} {name}!"
 
 with setvars(greeting="Hi", name="Bob"):
@@ -398,7 +399,7 @@ with setvars(greeting="Hi", name="Bob"):
 Note:
 
 * With `setvars`, you *must* decorate the function with `@tooled` (this is something `auto_cli` does on your behalf).
-* `setvars` entirely bypasses the option parsing and the type annotations will not be used to wrap these values. In other words, if a variable is annotated `Argument & int` and you provide the value "1", it will remain a string.
+* `setvars` entirely bypasses the option parsing and the type annotations will not be used to wrap these values. In other words, if a variable is annotated `Option & int` and you provide the value "1", it will remain a string.
 
 
 ### Using with Ptera
@@ -425,4 +426,4 @@ with overlay.tweaking({
     assert greet.new(greeting="Bonjour")() == "Bonjour toto!"
 ```
 
-Read the documentation for [Ptera](https://github.com/mila-iqia/ptera) for more information. Note that Ptera is not limited to variables tagged `Argument`, it can manipulate *any* variable in a tooled function.
+Read the documentation for [Ptera](https://github.com/mila-iqia/ptera) for more information. Note that Ptera is not limited to variables tagged `Option`, it can manipulate *any* variable in a tooled function.
