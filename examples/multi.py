@@ -7,7 +7,7 @@ Example usage:
 
 """
 
-from coleo import Argument, auto_cli, default
+from coleo import Option, auto_cli, default
 
 
 @auto_cli
@@ -21,7 +21,7 @@ class main:
             """Add two numbers together."""
             # The two numbers to add
             # [positional: 2]
-            num: Argument & int
+            num: Option & int
             x, y = num
             return x + y
 
@@ -29,7 +29,7 @@ class main:
             """Multiply two numbers together."""
             # The two numbers to multiply
             # [positional: 2]
-            num: Argument & int
+            num: Option & int
             x, y = num
             return x * y
 
@@ -37,16 +37,16 @@ class main:
             """Compute the base to the exponent."""
             # Base of the operation
             # [alias: -b]
-            base: Argument & int
+            base: Option & int
             # Exponent of the operation
             # [alias: -e]
-            exponent: Argument & int
+            exponent: Option & int
             return base ** exponent
 
     def greet():
         """Greet someone."""
         # The greeting
-        greeting: Argument = default("Hello")
+        greeting: Option = default("Hello")
         # The name to greet
-        name: Argument = default("you")
+        name: Option = default("you")
         return f"{greeting}, {name}!"

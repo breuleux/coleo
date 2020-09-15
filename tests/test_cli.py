@@ -5,8 +5,8 @@ import pytest
 from coleo import (
     ABSENT,
     ArgsExpander,
-    Argument,
     ConflictError,
+    Option,
     catalogue,
     default,
     make_cli,
@@ -21,7 +21,7 @@ from .common import one_test_per_assert
 
 @tooled
 def lager(x, y):
-    z: Argument & tag.Bargument & int
+    z: Option & tag.Boption & int
     return x + y + z
 
 
@@ -29,10 +29,10 @@ def lager(x, y):
 def stout(v):
     # Double you,
     # Double me
-    w: Argument & int = default(1)
+    w: Option & int = default(1)
     # This is your cue
     # [metavar: CUE]
-    q: Argument & int = 2
+    q: Option & int = 2
     a = lager(v, w)
     b = lager(v, q)
     return a, b
@@ -40,14 +40,14 @@ def stout(v):
 
 @tooled
 def thing():
-    arg: Argument & str
+    arg: Option & str
     return arg
 
 
 @tooled
 def thingy():
     # [group: puorg]
-    arg: Argument
+    arg: Option
     return arg
 
 
@@ -64,29 +64,26 @@ def test_catalogue():
 
     assert _catalogue(lager) == {
         lager: {
-            "Argument": {"annotation": ABSENT, "doc": None},
+            "Option": {"annotation": ABSENT, "doc": None},
             "tag": {"annotation": ABSENT, "doc": None},
             "int": {"annotation": ABSENT, "doc": None},
             "x": {"annotation": ABSENT, "doc": None},
             "y": {"annotation": ABSENT, "doc": None},
-            "z": {
-                "annotation": tag.Argument & tag.Bargument & int,
-                "doc": None,
-            },
+            "z": {"annotation": tag.Option & tag.Boption & int, "doc": None,},
         },
     }
 
     assert _catalogue(stout) == {
         **_catalogue(lager),
         stout: {
-            "Argument": {"annotation": ABSENT, "doc": None},
+            "Option": {"annotation": ABSENT, "doc": None},
             "int": {"annotation": ABSENT, "doc": None},
             "w": {
-                "annotation": tag.Argument & int,
+                "annotation": tag.Option & int,
                 "doc": "Double you,\nDouble me",
             },
             "q": {
-                "annotation": tag.Argument & int,
+                "annotation": tag.Option & int,
                 "doc": "This is your cue\n[metavar: CUE]",
             },
             "a": {"annotation": ABSENT, "doc": None},
@@ -111,7 +108,7 @@ def test_cli():
     assert run_cli(lager, (3, 2), argv="--z=:math:cos(0)".split(),) == 6
     assert run_cli(stout, (3,), argv="--z=3".split()) == (7, 8)
     assert run_cli(stout, (3,), argv="--z=3 --w=10".split()) == (16, 8)
-    assert run_cli(stout, (3,), tag=tag.Bargument, argv="--z=3".split()) == (
+    assert run_cli(stout, (3,), tag=tag.Boption, argv="--z=3".split()) == (
         7,
         8,
     )
@@ -155,7 +152,7 @@ def test_unknown_argument():
     assert exc.value.code == 2
 
     with pytest.raises(SystemExit) as exc:
-        run_cli(stout, (3,), tag=tag.Bargument, argv="--z=3 --w=10".split())
+        run_cli(stout, (3,), tag=tag.Boption, argv="--z=3 --w=10".split())
     assert exc.value.code == 2
 
 
@@ -181,9 +178,9 @@ def patriotism():
     # Whether to wave the flag or not
     # [false-options]
     # [aliases: -f --yay]
-    flag: tag.Argument & bool = default(True)
+    flag: Option & bool = default(True)
     # [options: -n]
-    times: tag.Argument & int = default(1)
+    times: Option & int = default(1)
     if flag:
         return "wave" * times
     else:
@@ -415,43 +412,34 @@ def test_config_subcommands(tmpdir):
 
 class farm:
     def build():
-        material: tag.Argument
+        material: Option
         return f"built farm out of {material}"
 
     class duck:
         def honk():
-            repeat: tag.Argument & int = default(10)
+            repeat: Option & int = default(10)
             return "honk" * repeat
 
         def eat():
-            peas: tag.Argument & bool = default(False)
+            peas: Option & bool = default(False)
             if peas:
                 return "nom nom nom"
 
 
 def test_subcommands_as_class():
     assert (
-        run_cli(
-            farm,
-            argv=f"build --material wood".split()
-        )
+        run_cli(farm, argv="build --material wood".split())
         == "built farm out of wood"
     )
 
-    assert (
-        run_cli(
-            farm,
-            argv=f"duck honk --repeat 3".split()
-        )
-        == "honkhonkhonk"
-    )
+    assert run_cli(farm, argv="duck honk --repeat 3".split()) == "honkhonkhonk"
 
 
 @tooled
 def groot():
     # Name to groot
     # [positional]
-    name: tag.Argument
+    name: Option
     return f"Grootings, {name}!"
 
 
@@ -459,7 +447,7 @@ def groot():
 def translate():
     # Translation vector
     # [positional: 2]
-    vector: tag.Argument & int
+    vector: Option & int
     return vector
 
 
@@ -467,7 +455,7 @@ def translate():
 def reverso():
     # Things to reverse
     # [positional: *]
-    things: tag.Argument
+    things: Option
     things.reverse()
     return things
 
@@ -493,9 +481,9 @@ def test_positional():
 @tooled
 def multipos():
     # [positional]
-    one: tag.Argument
+    one: Option
     # [positional]
-    two: tag.Argument
+    two: Option
     return two, one
 
 
@@ -506,14 +494,14 @@ def test_multiple_positional():
 @tooled
 def scattered_multipos():
     # [positional]
-    three: tag.Argument
+    three: Option
     return multipos()
 
 
 @tooled
 def scattered_multipos2():
     # [positional]
-    two: tag.Argument
+    two: Option
     return multipos()
 
 
@@ -527,9 +515,9 @@ def test_multiple_positional_bad():
 @tooled
 def leftovers():
     # [positional]
-    one: tag.Argument
+    one: Option
     # [remainder]
-    nomnom: tag.Argument
+    nomnom: Option
     return nomnom
 
 
@@ -545,10 +533,10 @@ def test_leftovers():
 @tooled
 def ice_cream():
     # [nargs: 2]
-    duo: tag.Argument & int
+    duo: Option & int
 
     # [nargs: *]
-    tang: tag.Argument & int
+    tang: Option & int
 
     return duo, tang
 
@@ -576,11 +564,11 @@ def test_setvars():
 @tooled
 def accum():
     # [action: append]
-    junk: Argument = default([])
+    junk: Option = default([])
 
     # [action: append]
     # [nargs: +]
-    clusters: Argument = default([])
+    clusters: Option = default([])
 
     return junk, clusters
 
@@ -605,16 +593,16 @@ def test_append():
 def boo():
     # [negate: --clap]
     # No jeering
-    jeer: Argument & bool = default(True)
+    jeer: Option & bool = default(True)
 
     # [negate]
     # Lack of goodness
-    good: Argument & bool = default(True)
+    good: Option & bool = default(True)
 
     # Potato!
     # [false-options: --famine]
     # [false-options-doc: No potato]
-    potato: Argument & bool = default(None)
+    potato: Option & bool = default(None)
 
     return jeer, good, potato
 

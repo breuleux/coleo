@@ -11,22 +11,22 @@ To see all options:
 
 import random
 
-from coleo import Argument, auto_cli, default, tooled
+from coleo import Option, auto_cli, default, tooled
 
 
 @tooled
 def guess():
     # Minimal possible number
-    minimum: Argument & int = default(0)
+    minimum: Option & int = default(0)
     # Maximal possible number
-    maximum: Argument & int = default(100)
+    maximum: Option & int = default(100)
 
     # [group: whimsy]
     # Maximal number of tries
-    maxtries: Argument & int = default(10)
+    maxtries: Option & int = default(10)
 
     # Force the number to guess (defaults to random)
-    target: Argument & int = default(random.randint(minimum, maximum))
+    target: Option & int = default(random.randint(minimum, maximum))
 
     assert minimum <= target <= maximum
 
@@ -49,7 +49,7 @@ def guess():
 def main():
     """Guessing game"""
     # Number of rounds of guessing
-    rounds: Argument & int = default(1)
+    rounds: Option & int = default(1)
 
     for i in range(rounds):
         guess()

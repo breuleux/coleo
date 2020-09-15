@@ -6,15 +6,15 @@ Example usage:
 
 """
 
-from coleo import Argument, auto_cli, default
+from coleo import Option, auto_cli, default
 
 
 @auto_cli
 def main():
     # The greeting
-    greeting: Argument = default("Hello")
+    greeting: Option = default("Hello")
 
     # The name to greet
-    name: Argument = default("you")
+    name: Option = default("you")
 
     return f"{greeting}, {name}!"

@@ -12,15 +12,15 @@ Coleo is a minimum-effort way to create a command-line interface in Python.
 First, define a command line interface as follows:
 
 ```python
-from coleo import Argument, auto_cli, default
+from coleo import Option, auto_cli, default
 
 @auto_cli
 def main():
     # The greeting
-    greeting: Argument = default("Hello")
+    greeting: Option = default("Hello")
 
     # The name to greet
-    name: Argument = default("you")
+    name: Option = default("you")
 
     return f"{greeting}, {name}!"
 ```
@@ -43,12 +43,12 @@ optional arguments:
   --name VALUE      The name to greet
 ```
 
-* Any variable annotated with `Argument` will become an option.
+* Any variable annotated with `Option` will become an option.
 * You can provide a default value with `default(value)`, although you don't have to, if the argument is required.
 * If there is a comment above the variable, it will be used as documentation for the option.
 
 
-## Argument types
+## Option types
 
 By default, all arguments are interpreted as strings, but you can easily give a different type to an argument:
 
@@ -56,9 +56,9 @@ By default, all arguments are interpreted as strings, but you can easily give a 
 @auto_cli
 def main():
     # This argument will be converted to an int
-    x: Argument & int
+    x: Option & int
     # This argument will be converted to a float
-    y: Argument & float
+    y: Option & float
     return x + y
 ```
 
@@ -69,7 +69,7 @@ If the type is bool, the option will take no argument, for example:
 ```python
 @auto_cli
 def main():
-    flag: Argument & bool = default(False)
+    flag: Option & bool = default(False)
     return "yes!" if flag else "no!"
 ```
 
@@ -88,7 +88,7 @@ You can also *negate* the flag, meaning that you want to provide an option that 
 @auto_cli
 def main():
     # [negate]
-    flag: Argument & bool = default(True)
+    flag: Option & bool = default(True)
     return "yes!" if flag else "no!"
 ```
 
@@ -114,7 +114,7 @@ def main():
     # [options: -y]
     # [false-options: -n]
     # [false-options-doc: Set the flag to False]
-    flag: Argument & bool = default(None)
+    flag: Option & bool = default(None)
     return flag
 ```
 
@@ -135,7 +135,7 @@ Use `coleo.FileType` (or `argparse.FileType`, it's the same thing) to open a fil
 ```python
 @auto_cli
 def main():
-    grocery_list: Argument & coleo.FileType("r")
+    grocery_list: Option & coleo.FileType("r")
     with grocery_list as f:
         for food in f.readlines():
             print(f"Gotta buy some {food}")
@@ -149,13 +149,13 @@ You can manipulate configuration files with `coleo.config` or `coleo.ConfigFile`
 @auto_cli
 def main():
     # ConfigFile lets you read or write a configuration file
-    book: Argument & ConfigFile
+    book: Option & ConfigFile
     contents = book.read()
     contents["xyz"] = "abc"
     book.write(contents)
 
     # config will read the file for you or parse the argument as JSON
-    magazine: Argument & config
+    magazine: Option & config
     print(magazine)
 ```
 
@@ -178,7 +178,7 @@ Any function can be used as a "type" for an argument. So for example, if you wan
 ```python
 @auto_cli
 def main():
-    obj: Argument & json.loads
+    obj: Option & json.loads
     return type(obj).__name__
 ```
 
@@ -196,7 +196,7 @@ If you're feeling super feisty and care nothing about safety, you can even use `
 ```python
 @auto_cli
 def main():
-    obj: Argument & eval
+    obj: Option & eval
     return type(obj).__name__
 ```
 
@@ -217,15 +217,15 @@ Using comments of the form `# [<instruction>: <args ...>]` you can customize the
 def main():
     # This argument can be given as either --greeting or -g
     # [alias: -g]
-    greeting: Argument = default("Hello")
+    greeting: Option = default("Hello")
 
     # This argument is positional
     # [positional]
-    name: Argument = default("you")
+    name: Option = default("you")
 
     # This argument can only be given as -n
     # [options: -n]
-    ntimes: Argument & int = default(1)
+    ntimes: Option & int = default(1)
 
     for i in range(ntimes):
         print(f"{greeting}, {name}!")
@@ -272,23 +272,23 @@ You can create an interface with a hierarchy of subcommands by decorating a clas
 class main:
     class calc:
         def add():
-            x: Argument & int
-            y: Argument & int
+            x: Option & int
+            y: Option & int
             return x + y
 
         def mul():
-            x: Argument & int
-            y: Argument & int
+            x: Option & int
+            y: Option & int
             return x * y
 
         def pow():
-            base: Argument & int
-            exponent: Argument & int
+            base: Option & int
+            exponent: Option & int
             return base ** exponent
 
     def greet():
-        greeting: Argument = default("Hello")
-        name: Argument = default("you")
+        greeting: Option = default("Hello")
+        name: Option = default("you")
         return f"{greeting}, {name}!"
 ```
 
@@ -309,12 +309,12 @@ $ python multi.py calc add --x=3 --y=8
 It is possible to share behavior and arguments between subcommands, or to split complex functionality into multiple pieces. For example, maybe multiple subcommands in your application require an API key, which can either be given on the command line or can be read from a file. This is how you would share this behavior across all subcommands:
 
 ```python
-from coleo import Argument, auto_cli, config, default, tooled
+from coleo import Option, auto_cli, config, default, tooled
 
 @tooled
 def apikey():
     # The API key to use
-    key: Argument = default(None)
+    key: Option = default(None)
     if key is None:
         # If no key parameter is given on the command line, try to read it from
         # some standard location.
@@ -325,7 +325,7 @@ def apikey():
 class main:
     def search():
         interface = Application(apikey())
-        query: Argument
+        query: Option
         return interface.search(query)
 
     def install():

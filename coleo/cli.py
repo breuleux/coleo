@@ -23,8 +23,8 @@ from ptera.selfless import PreState, PteraNameError
 
 from .config import ConfigFile
 
-Argument = tag.Argument
-Option = Argument
+Option = tag.Option
+Argument = Option
 
 
 _count = count()
