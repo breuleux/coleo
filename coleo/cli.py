@@ -235,6 +235,8 @@ class Configurator:
                         else:
                             opts.negate = [f"--no-{optname}"]
                     elif command == "false-options-doc":
+                        if not opts.negate:
+                            opts.negate = [f"--no-{optname}"]
                         opts.negate_doc = arg
                     elif command == "metavar":
                         opts.metavar = arg
