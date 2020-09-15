@@ -69,7 +69,7 @@ def test_catalogue():
             "int": {"annotation": ABSENT, "doc": None},
             "x": {"annotation": ABSENT, "doc": None},
             "y": {"annotation": ABSENT, "doc": None},
-            "z": {"annotation": tag.Option & tag.Boption & int, "doc": None,},
+            "z": {"annotation": tag.Option & tag.Boption & int, "doc": None},
         },
     }
 
