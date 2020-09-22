@@ -14,6 +14,7 @@ from coleo import (
     setvars,
     tag,
     tooled,
+    with_extras,
 )
 
 from .common import one_test_per_assert
@@ -618,3 +619,53 @@ def test_negate():
 
     assert run_cli(boo, (), argv=["--potato"]) == (True, True, True)
     assert run_cli(boo, (), argv=["--famine"]) == (True, True, False)
+
+
+def spaghetti(funcs):
+    rval = []
+    for func in funcs:
+        func(rval)
+    return rval
+
+
+@tooled
+def append_number(rval):
+    num: Option & int = default(None)
+    if num is not None:
+        rval.append(num)
+
+
+@tooled
+def append_bool(rval):
+    # [false-options-doc: No boo!]
+    boo: Option & bool = default(None)
+    if boo is not None:
+        rval.append(boo)
+
+
+@with_extras(append_number, append_bool)
+def fettucini(funcs):
+    rval = []
+    for func in funcs:
+        func(rval)
+    return rval
+
+
+def test_extras():
+    fns = [append_number, append_bool]
+    assert run_cli(
+        spaghetti, (fns,), extras=fns, argv="--num 37 --boo".split()
+    ) == [37, True]
+
+    assert run_cli(
+        spaghetti, (fns,), extras=fns, argv="--boo --num 37".split()
+    ) == [37, True]
+
+    assert run_cli(spaghetti, (fns,), extras=fns, argv="--no-boo".split()) == [
+        False
+    ]
+
+    assert run_cli(fettucini, (fns,), argv="--boo --num 37".split()) == [
+        37,
+        True,
+    ]

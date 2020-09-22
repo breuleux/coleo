@@ -9,5 +9,6 @@ from .cli import (
     make_cli,
     run_cli,
     setvars,
+    with_extras,
 )
 from .config import ConfigFile, config, register_extension

@@ -149,6 +149,7 @@ class Configurator:
         *,
         argparser,
         entry_point=None,
+        extras=[],
         tag=Argument,
         description=None,
         eval_env=None,
@@ -406,7 +407,7 @@ def _getdoc(obj):
         return getattr(obj, "__doc__", None)
 
 
-def _make_cli_helper(parser, entry, **kwargs):
+def _make_cli_helper(parser, entry, extras, **kwargs):
     if isinstance(entry, dict):
         subparsers = parser.add_subparsers()
         for name, subentry in entry.items():
@@ -415,7 +416,7 @@ def _make_cli_helper(parser, entry, **kwargs):
             subparser = subparsers.add_parser(
                 name, help=_getdoc(subentry), argument_default=argparse.SUPPRESS
             )
-            _make_cli_helper(subparser, subentry)
+            _make_cli_helper(subparser, subentry, extras, **kwargs)
 
     elif inspect.isclass(entry):
         structure = {"__doc__": entry.__doc__}
@@ -426,14 +427,17 @@ def _make_cli_helper(parser, entry, **kwargs):
                 structure[name] = entry2
             elif isinstance(entry2, (PteraFunction, dict, type)):
                 structure[name] = entry2
-        return _make_cli_helper(parser, structure, **kwargs)
+        return _make_cli_helper(parser, structure, extras, **kwargs)
 
     else:
         if isinstance(entry, FunctionType):
             entry = tooled(entry)
         if not isinstance(entry, PteraFunction):
-            raise TypeError(f"Expected a dict or a function, not {type(entry)}")
-        cfg = Configurator(entry_point=entry, argparser=parser, **kwargs)
+            raise TypeError(
+                f"Expected a class, dict a function, not {type(entry)}"
+            )
+        all_entries = [entry, *extras, getattr(entry, "coleo_extras", [])]
+        cfg = Configurator(entry_point=all_entries, argparser=parser, **kwargs)
         parser.set_defaults(**{"#cfg": (cfg, entry)})
 
 
@@ -458,7 +462,7 @@ def make_cli(
     args=(),
     *,
     argv=None,
-    entry_point=None,
+    extras=[],
     tag=Argument,
     description=None,
     eval_env=None,
@@ -472,7 +476,7 @@ def make_cli(
         description=description or _getdoc(entry),
         argument_default=argparse.SUPPRESS,
     )
-    _make_cli_helper(parser, entry, tag=tag, eval_env=eval_env)
+    _make_cli_helper(parser, entry, tag=tag, eval_env=eval_env, extras=extras)
     opts = parse_options(parser, argv=argv, expand=expand)
     cfg, fn = getattr(opts, "#cfg", (None, None))
     if cfg is None:
@@ -511,3 +515,13 @@ def auto_cli(fn, *args, **kwargs):  # pragma: no cover
     if result is not None:
         print(result)
     return fn
+
+
+def with_extras(*extras):
+    def deco(fn):
+        if not isinstance(fn, PteraFunction):
+            fn = tooled(fn)
+        fn.coleo_extras = extras
+        return fn
+
+    return deco
