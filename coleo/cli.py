@@ -51,12 +51,18 @@ def _catalogue(seen, results, fn):
 
 
 def catalogue(functions):
+    """Create a catalogue of all ptera variables accessible from the functions.
+
+    The functions are parsed and any global variables they reference are
+    followed if they are ptera-tooled.
+    """
     results = {}
     _catalogue(set(), results, functions)
     return results
 
 
 def _find_configurable(catalogue, tag):
+    """Return a dict of variables from the catalogue that match the tag."""
     rval = defaultdict(dict)
     for fn, variables in catalogue.items():
         for name, data in variables.items():
@@ -67,6 +73,18 @@ def _find_configurable(catalogue, tag):
 
 
 class ArgsExpander:
+    """Expand arguments given from files into argv.
+
+    An arguments file must be a ConfigFile. Each key must start with "-" or
+    "--" to provide the similarly-named argument. The key "#include" triggers
+    inclusion of another file.
+
+    Attributes:
+        prefix: The character prefix that triggers reading arguments from
+            a file.
+        default_file: Automatically add arguments from that file if it exists.
+    """
+
     def __init__(self, prefix, default_file=None):
         self.prefix = prefix
         self.default_file = default_file
@@ -107,6 +125,10 @@ class ArgsExpander:
         return self._generate_args_from_dict(contents)
 
     def expand(self, argv):
+        """Expand argument files into the argv list.
+
+        An argument file is any argument that starts with the prefix.
+        """
         if self.default_file:
             if os.path.exists(self.default_file):
                 pfx = self.prefix[0]
@@ -131,6 +153,14 @@ class ArgsExpander:
 
 
 def parse_options(parser, *, argv=None, expand=None):
+    """Parse argv using the given argparser.
+
+    This returns a Namespace.
+
+    * If argv is already a Namespace, it is returned unchanged.
+    * If argv is None, sys.argv[1:] is used.
+    * If expand is not None, it should be an ArgsExpander.
+    """
     if isinstance(argv, argparse.Namespace):
         args = argv
     elif isinstance(argv, dict):
@@ -454,21 +484,41 @@ def _setvars(values, tag):
 
 
 def setvars(**values):
-    return _setvars(values, tag=Argument)
+    return _setvars(values, tag=Option)
 
 
 def make_cli(
     entry,
-    args=(),
     *,
     argv=None,
     extras=[],
-    tag=Argument,
+    tag=Option,
     description=None,
     eval_env=None,
     expand=None,
-    return_split=False,
 ):
+    """Create a coleo CLI from a function, dict or class.
+
+    Arguments:
+        entry: A function, dict or class. If a dict or class, each name/method
+            must take no arguments (not even self) and will be mapped to a
+            subcommand.
+        argv: List of command-line arguments. Defaults to sys.argv[1:].
+        extras: List of tooled functions that define options and may be called
+            by the entry function. This is only necessary if these functions
+            cannot be found by following references from the entry function.
+        tag: The tag that variables must be annotated with to appear as options.
+            This defaults to Option and it is not recommended to change it.
+        description: Description of the command.
+        eval_env: Environment to evaluate arguments of the form ":symbol". If
+            provided, a sequence of options such as `--opt :x` will try to
+            resolve `eval_env["x"]`.
+        expand: An ArgsExpander to use to fill in all the arguments.
+
+    Returns:
+        The tuple (opts, call) such that the command-line application can be
+        run by calling `call(opts=opts)`.
+    """
     if expand is None or isinstance(expand, str):
         expand = ArgsExpander(prefix=expand or "", default_file=None,)
 
@@ -483,7 +533,7 @@ def make_cli(
         parser.print_help()
         sys.exit(1)
 
-    def thunk(opts=opts, args=args):
+    def thunk(opts=opts, args=()):
         with cfg(opts):
             try:
                 result = fn(*args)
@@ -503,18 +553,62 @@ def make_cli(
     return opts, thunk
 
 
-def run_cli(*args, **kwargs):
-    opts, thunk = make_cli(*args, **kwargs)
-    return thunk(opts)
+def run_cli(entry, args=(), **kwargs):
+    """Run a coleo CLI from a function, dict or class and return the result.
+
+    Arguments:
+        entry: A function, dict or class. If a dict or class, each name/method
+            must take no arguments (not even self) and will be mapped to a
+            subcommand.
+        args: Tuple of arguments to provide to the function (default: ()).
+        argv: List of command-line arguments. Defaults to sys.argv[1:].
+        extras: List of tooled functions that define options and may be called
+            by the entry function. This is only necessary if these functions
+            cannot be found by following references from the entry function.
+        tag: The tag that variables must be annotated with to appear as options.
+            This defaults to Option and it is not recommended to change it.
+        description: Description of the command.
+        eval_env: Environment to evaluate arguments of the form ":symbol". If
+            provided, a sequence of options such as `--opt :x` will try to
+            resolve `eval_env["x"]`.
+        expand: An ArgsExpander to use to fill in all the arguments.
+
+    Returns:
+        The return value of the entry function after it was called.
+    """
+    opts, call = make_cli(entry, **kwargs)
+    return call(opts=opts, args=args)
 
 
-def auto_cli(fn, *args, **kwargs):  # pragma: no cover
-    if inspect.isfunction(fn):
-        fn = tooled(fn)
-    result = run_cli(fn, *args, **kwargs)
+def auto_cli(entry, args=(), **kwargs):  # pragma: no cover
+    """Run a coleo CLI from a function, dict or class and print the result.
+
+    Arguments:
+        entry: A function, dict or class. If a dict or class, each name/method
+            must take no arguments (not even self) and will be mapped to a
+            subcommand.
+        args: Tuple of arguments to provide to the function (default: ()).
+        argv: List of command-line arguments. Defaults to sys.argv[1:].
+        extras: List of tooled functions that define options and may be called
+            by the entry function. This is only necessary if these functions
+            cannot be found by following references from the entry function.
+        tag: The tag that variables must be annotated with to appear as options.
+            This defaults to Option and it is not recommended to change it.
+        description: Description of the command.
+        eval_env: Environment to evaluate arguments of the form ":symbol". If
+            provided, a sequence of options such as `--opt :x` will try to
+            resolve `eval_env["x"]`.
+        expand: An ArgsExpander to use to fill in all the arguments.
+
+    Returns:
+        The entry function.
+    """
+    if inspect.isfunction(entry):
+        entry = tooled(entry)
+    result = run_cli(entry, args, **kwargs)
     if result is not None:
         print(result)
-    return fn
+    return entry
 
 
 def with_extras(*extras):

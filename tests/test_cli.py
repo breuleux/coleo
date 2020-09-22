@@ -131,13 +131,12 @@ def test_cli():
 
 
 def test_make_cli():
-    opts, thunk = make_cli(stout, (3,), argv="--z=3".split(), return_split=True)
+    opts, thunk = make_cli(stout, argv="--z=3".split())
     opts = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
     assert opts == {"z": 3}
-    assert thunk() == (7, 8)
-    assert thunk(opts={"z": 4}) == (8, 9)
+    assert thunk(args=(3,)) == (7, 8)
+    assert thunk(opts={"z": 4}, args=(3,)) == (8, 9)
     assert thunk(args=(4,)) == (8, 9)
-    assert thunk({"z": 4}, (4,)) == (9, 10)
 
 
 def test_no_env():
