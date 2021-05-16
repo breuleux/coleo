@@ -12,3 +12,4 @@ from .cli import (
     with_extras,
 )
 from .config import ConfigFile, config, register_extension
+from .version import version
