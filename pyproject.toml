@@ -17,8 +17,8 @@ pyyaml = {version = "^5.3", optional = true}
 black = {version = "^21.5b1", python = "^3.7"}
 pytest = "^5.4.1"
 pytest-cov = "^2.8.1"
-isort = "^4.3.21"
-flake8 = "^3.7.9"
+isort = "^5.8.0"
+flake8 = "^3.9.2"
 unimport = "^0.2.8"
 
 [tool.poetry.extras]
