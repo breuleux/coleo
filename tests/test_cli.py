@@ -102,11 +102,11 @@ def test_catalogue():
 def test_cli():
     assert (
         run_cli(
-            lager, ("a", "b"), argv="--z=:foo".split(), eval_env={"foo": "c"},
+            lager, ("a", "b"), argv="--z=:foo".split(), eval_env={"foo": "c"}
         )
         == "abc"
     )
-    assert run_cli(lager, (3, 2), argv="--z=:math:cos(0)".split(),) == 6
+    assert run_cli(lager, (3, 2), argv="--z=:math:cos(0)".split()) == 6
     assert run_cli(stout, (3,), argv="--z=3".split()) == (7, 8)
     assert run_cli(stout, (3,), argv="--z=3 --w=10".split()) == (16, 8)
     assert run_cli(stout, (3,), tag=tag.Boption, argv="--z=3".split()) == (
@@ -117,15 +117,15 @@ def test_cli():
     assert run_cli(thingy, (), argv=["--arg", "1"]) == "1"
     assert run_cli(thingy, (), argv=["--arg", "xyz"]) == "xyz"
     assert (
-        run_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"],)
+        run_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"])
         == "bar"
     )
     assert run_cli(
-        thingy, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"],
+        thingy, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"]
     ) == [1, 2, 3]
 
     assert (
-        run_cli(thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"],)
+        run_cli(thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"])
         == ":foo"
     )
 
@@ -141,9 +141,7 @@ def test_make_cli():
 
 def test_no_env():
     with pytest.raises(Exception):
-        run_cli(
-            lager, ("a", "b"), argv="--z=:foo".split(),
-        )
+        run_cli(lager, ("a", "b"), argv="--z=:foo".split())
 
 
 def test_unknown_argument():
@@ -192,9 +190,7 @@ def test_types():
     assert run_cli(patriotism, (), argv="-f".split()) == "wave"
     assert run_cli(patriotism, (), argv="--flag".split()) == "wave"
     assert run_cli(patriotism, (), argv="--no-flag".split()) == "don't wave"
-    assert (
-        run_cli(patriotism, (), argv="--flag -n 3".split(),) == "wavewavewave"
-    )
+    assert run_cli(patriotism, (), argv="--flag -n 3".split()) == "wavewavewave"
     with pytest.raises(SystemExit) as exc:
         run_cli(patriotism, (), argv="--flag=1".split())
     assert exc.value.code == 2
@@ -213,7 +209,7 @@ def test_config_file(tmpdir):
     cfg1.write(json.dumps({"z": 3, "w": 10}))
 
     assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
+        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
     ) == (16, 8)
 
     assert run_cli(stout, (3,), argv=[f"@{cfg1.strpath}"], expand="@",) == (
@@ -228,18 +224,16 @@ def test_config_file(tmpdir):
 
     cfg2 = tmpdir.join("config2.json")
     with pytest.raises(SystemExit) as exc:
-        run_cli(
-            stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@",
-        )
+        run_cli(stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@")
     assert exc.value.code == 2
 
     cfg3 = tmpdir.join("config3.json")
     cfg3.write(json.dumps({"#include": cfg1.strpath, "w": 10}))
     assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg3),
+        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg3)
     ) == (16, 8)
 
-    assert run_cli(stout, (3,), argv=[{"#include": cfg1.strpath}],) == (16, 8)
+    assert run_cli(stout, (3,), argv=[{"#include": cfg1.strpath}]) == (16, 8)
 
 
 def test_config_toml(tmpdir):
@@ -247,7 +241,7 @@ def test_config_toml(tmpdir):
     cfg1.write("z = 3\nw = 10\n")
 
     assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
+        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
     ) == (16, 8)
 
 
@@ -256,16 +250,14 @@ def test_config_cfg(tmpdir):
     cfg1.write("[default]\nz = 3\nw = 10\n")
 
     assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
+        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
     ) == (16, 8)
 
     cfg2 = tmpdir.join("config2.cfg")
     cfg2.write("[ohno]\nz = 3\nw = 10\n")
 
     with pytest.raises(SystemExit) as exc:
-        run_cli(
-            stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@",
-        )
+        run_cli(stout, (3,), argv=f"@{cfg2.strpath}".split(), expand="@")
     assert exc.value.code == 2
 
 
@@ -274,7 +266,7 @@ def test_config_yaml(tmpdir):
     cfg1.write("z: 3\nw: 10\n")
 
     assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1),
+        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
     ) == (16, 8)
 
 
@@ -283,20 +275,16 @@ def test_config_unknown(tmpdir):
     cfg1.write("z: 3\nw: 10\n")
 
     with pytest.raises(SystemExit) as exc:
-        run_cli(
-            stout, (3,), argv=f"@{cfg1.strpath}".split(), expand="@",
-        )
+        run_cli(stout, (3,), argv=f"@{cfg1.strpath}".split(), expand="@")
     assert exc.value.code == 2
 
 
 def test_config_dict():
-    assert run_cli(stout, (3,), argv=[{"z": 3, "w": 10}],) == (16, 8)
+    assert run_cli(stout, (3,), argv=[{"z": 3, "w": 10}]) == (16, 8)
 
-    assert (
-        run_cli(patriotism, (), argv=[{"flag": True, "-n": 2}],) == "wavewave"
-    )
+    assert run_cli(patriotism, (), argv=[{"flag": True, "-n": 2}]) == "wavewave"
 
-    assert run_cli(patriotism, (), argv=[{"flag": False}],) == "don't wave"
+    assert run_cli(patriotism, (), argv=[{"flag": False}]) == "don't wave"
 
 
 def test_bad_entry():
@@ -367,7 +355,7 @@ def test_subcommands():
     # Test with no arguments
     with pytest.raises(SystemExit) as exc:
         assert (
-            run_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="",)
+            run_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="")
             == "xyz"
         )
     assert exc.value.code == 1

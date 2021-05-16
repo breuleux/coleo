@@ -520,7 +520,7 @@ def make_cli(
         run by calling `call(opts=opts)`.
     """
     if expand is None or isinstance(expand, str):
-        expand = ArgsExpander(prefix=expand or "", default_file=None,)
+        expand = ArgsExpander(prefix=expand or "", default_file=None)
 
     parser = argparse.ArgumentParser(
         description=description or _getdoc(entry),
