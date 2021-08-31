@@ -443,6 +443,9 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
         for name, subentry in entry.items():
             if name == "__doc__":
                 continue
+            elif name == "__main__":
+                _make_cli_helper(parser, subentry, extras, **kwargs)
+                continue
             subparser = subparsers.add_parser(
                 name, help=_getdoc(subentry), argument_default=argparse.SUPPRESS
             )

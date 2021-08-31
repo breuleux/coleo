@@ -361,6 +361,26 @@ def test_subcommands():
     assert exc.value.code == 1
 
 
+def test_subcommands_with_main():
+    assert (
+        run_cli(
+            {"thingy": thingy, "__main__": patriotism},
+            (),
+            argv=[{"flag": True}],
+        )
+        == "wave"
+    )
+
+    assert (
+        run_cli(
+            {"__main__": thingy, "patriotism": patriotism},
+            (),
+            argv=["patriotism", {"flag": True}],
+        )
+        == "wave"
+    )
+
+
 def test_config_subcommands(tmpdir):
     cfg1 = tmpdir.join("config1.json")
     cfg1.write(json.dumps({"flag": True}))
