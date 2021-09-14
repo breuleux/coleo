@@ -564,6 +564,29 @@ def test_nargs():
     )
 
 
+@tooled
+def origami():
+    folds: Option & int = default(0)
+
+    # [nargs: --]
+    rest: Option
+
+    return folds, rest
+
+
+def test_nargs_remainder():
+    assert run_cli(
+        origami, (), argv="--folds 3 --rest 4 --stuff 6".split()
+    ) == (
+        3,
+        ["4", "--stuff", "6"],
+    )
+    assert run_cli(origami, (), argv="--rest 4 --folds 3".split()) == (
+        0,
+        ["4", "--folds", "3"],
+    )
+
+
 def test_setvars():
     with setvars(z=3, w=10):
         assert stout(3) == (16, 8)

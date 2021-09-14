@@ -253,6 +253,7 @@ The following customizations are available:
   * `[nargs: ?]`: one optional argument
   * `[nargs: *]`: zero or more arguments
   * `[nargs: +]`: one or more arguments
+  * `[nargs: **]` or `[nargs: --]`: all remaining arguments, including --args
 * `[action: <action>]` customizes the action to perform
   * `[action: append]` lets you use an option multiple times, accumulating the results in a list (e.g. `python app.py -a 1 -a 2 -a 3`, would put `[1, 2, 3]` in `a`)
 * `[metavar: varname]` changes the variable name right after the option in the help string, e.g. `--opt METAVAR`

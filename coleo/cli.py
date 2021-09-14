@@ -278,6 +278,8 @@ class Configurator:
                         opts.nargs = argparse.REMAINDER
                     elif command in ["nargs", "positional"]:
                         opts.positional = command == "positional"
+                        if arg == "--" or arg == "**":
+                            arg = argparse.REMAINDER
                         opts.nargs = arg or None
                         try:
                             opts.nargs = int(opts.nargs)
