@@ -5,13 +5,13 @@ import re
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from itertools import count
 from types import FunctionType, SimpleNamespace
 
 from ptera import (
-    ABSENT,
     BaseOverlay,
+    Immediate,
     PteraFunction,
+    PteraNameError,
     Tag,
     TagSet,
     match_tag,
@@ -19,7 +19,6 @@ from ptera import (
     tag,
     tooled,
 )
-from ptera.selfless import PreState, PteraNameError
 
 from .config import ConfigFile
 
@@ -27,7 +26,15 @@ Option = tag.Option
 Argument = Option
 
 
-_count = count()
+class ConflictError(Exception):
+    pass
+
+
+def default(x):
+    # Normally the value of an Option should be guarded with default()
+    # in order to make it clearer that the value can be overriden, but
+    # this currently doesn't do anything.
+    return x
 
 
 def _catalogue(seen, results, fn):
@@ -37,13 +44,13 @@ def _catalogue(seen, results, fn):
     seen.add(id(fn))
 
     if isinstance(fn, PteraFunction):
-        state = fn.state.state if isinstance(fn.state, PreState) else fn.state
-        tst = type(state)
-        res = tst.__info__
-        results[fn] = res
-        for name, ann in res.items():
-            val = getattr(state, name, ABSENT)
-            _catalogue(seen, results, val)
+        info = fn.info
+        glb = fn.fn.__globals__
+        results[fn] = info
+        for name, props in info.items():
+            if props["provenance"] == "external":
+                if name in glb:
+                    _catalogue(seen, results, glb[name])
 
     elif isinstance(fn, (list, tuple)):
         for entry in fn:
@@ -477,14 +484,21 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
 
 
 def _setvars(values, tag):
-    def _resolver(value):
-        return lambda **_: value
+    def _intercepter(value):
+        def intercept(args):
+            print(args)
+            return value
+
+        return intercept
 
     return BaseOverlay(
-        {
-            select(f"{name}:##X", env={"##X": tag}): {"value": _resolver(value)}
+        *[
+            Immediate(
+                select(f"{name}:##X", env={"##X": tag}),
+                intercept=_intercepter(value),
+            )
             for name, value in values.items()
-        }
+        ]
     )
 
 

@@ -1,11 +1,13 @@
-from ptera import ABSENT, ConflictError, default, tag, tooled
+from ptera import ABSENT, tag, tooled
 
 from .cli import (
     ArgsExpander,
     Argument,
+    ConflictError,
     Option,
     auto_cli,
     catalogue,
+    default,
     make_cli,
     run_cli,
     setvars,
