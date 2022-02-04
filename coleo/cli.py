@@ -186,9 +186,7 @@ class Configurator:
         *,
         argparser,
         entry_point=None,
-        extras=[],
         tag=Argument,
-        description=None,
         eval_env=None,
         expand=None,
     ):
