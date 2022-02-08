@@ -10,10 +10,10 @@ from types import FunctionType, SimpleNamespace
 from ptera import (
     BaseOverlay,
     Immediate,
-    PteraFunction,
     PteraNameError,
     Tag,
     TagSet,
+    is_tooled,
     match_tag,
     select,
     tag,
@@ -43,9 +43,9 @@ def _catalogue(seen, results, fn):
 
     seen.add(id(fn))
 
-    if isinstance(fn, PteraFunction):
-        info = fn.info
-        glb = fn.fn.__globals__
+    if is_tooled(fn):
+        info = fn.__ptera_info__
+        glb = fn.__globals__
         results[fn] = info
         for name, props in info.items():
             if props["provenance"] == "external":
@@ -465,18 +465,18 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
                 entry2 = tooled(entry2)
                 setattr(entry, name, entry2)
                 structure[name] = entry2
-            elif isinstance(entry2, (PteraFunction, dict, type)):
+            elif is_tooled(entry2) or isinstance(entry2, (dict, type)):
                 structure[name] = entry2
         return _make_cli_helper(parser, structure, extras, **kwargs)
 
     else:
         if isinstance(entry, FunctionType):
             entry = tooled(entry)
-        if not isinstance(entry, PteraFunction):
+        if not is_tooled(entry):
             raise TypeError(
-                f"Expected a class, dict a function, not {type(entry)}"
+                f"Expected a class, dict or a tooled function, not {type(entry)}"
             )
-        all_entries = [entry, *extras, getattr(entry, "coleo_extras", [])]
+        all_entries = [entry, *extras, *getattr(entry, "coleo_extras", [])]
         cfg = Configurator(entry_point=all_entries, argparser=parser, **kwargs)
         parser.set_defaults(**{"#cfg": (cfg, entry)})
 
@@ -630,8 +630,7 @@ def auto_cli(entry, args=(), **kwargs):  # pragma: no cover
 
 def with_extras(*extras):
     def deco(fn):
-        if not isinstance(fn, PteraFunction):
-            fn = tooled(fn)
+        fn = tooled(fn)
         fn.coleo_extras = extras
         return fn
 
