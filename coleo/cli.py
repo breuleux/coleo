@@ -432,9 +432,11 @@ class Configurator:
     @contextmanager
     def __call__(self, argv=None):
         opts = parse_options(self.argparser, argv=argv, expand=self.expand)
-        opts = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
-        with _setvars(opts, self.tag):
-            yield opts
+        values = {k: v for k, v in vars(opts).items() if not k.startswith("#")}
+        values["__argparser__"] = self.argparser
+        values["__options__"] = opts
+        with _setvars(values, self.tag):
+            yield values
 
 
 def _getdoc(obj):
@@ -491,11 +493,13 @@ def _setvars(values, tag):
     return BaseOverlay(
         *[
             Immediate(
-                select(f"{name}:##X", env={"##X": tag}),
+                select(f"{name}:##X", env={"##X": tag})
+                if not name.startswith("__")
+                else select(name),
                 intercept=_intercepter(value),
             )
             for name, value in values.items()
-        ]
+        ],
     )
 
 
@@ -512,6 +516,7 @@ def make_cli(
     description=None,
     eval_env=None,
     expand=None,
+    parser=None,
 ):
     """Create a coleo CLI from a function, dict or class.
 
@@ -530,6 +535,7 @@ def make_cli(
             provided, a sequence of options such as `--opt :x` will try to
             resolve `eval_env["x"]`.
         expand: An ArgsExpander to use to fill in all the arguments.
+        parser: An existing ArgumentParser instance to extend.
 
     Returns:
         The tuple (opts, call) such that the command-line application can be
@@ -538,7 +544,7 @@ def make_cli(
     if expand is None or isinstance(expand, str):
         expand = ArgsExpander(prefix=expand or "", default_file=None)
 
-    parser = argparse.ArgumentParser(
+    parser = parser or argparse.ArgumentParser(
         description=description or _getdoc(entry),
         argument_default=argparse.SUPPRESS,
     )

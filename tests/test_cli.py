@@ -1,4 +1,5 @@
 import json
+from argparse import ArgumentParser
 
 import pytest
 
@@ -702,3 +703,15 @@ def test_extras():
         37,
         True,
     ]
+
+
+@tooled
+def tortellini():
+    aldente: Option & int
+    assert isinstance(__argparser__, ArgumentParser)
+    assert __options__.aldente == aldente
+    return aldente * 2
+
+
+def test_passing_parser():
+    assert run_cli(tortellini, (), argv="--aldente 5".split()) == 10
