@@ -484,7 +484,6 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
 def _setvars(values, tag):
     def _intercepter(value):
         def intercept(args):
-            print(args)
             return value
 
         return intercept
