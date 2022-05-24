@@ -41,7 +41,7 @@ class main:
             # Exponent of the operation
             # [alias: -e]
             exponent: Option & int
-            return base ** exponent
+            return base**exponent
 
     def greet():
         """Greet someone."""
