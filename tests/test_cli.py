@@ -66,6 +66,10 @@ def test_catalogue():
 
     assert _catalogue(lager) == {
         lager: {
+            "#enter": {"annotation": tag.enter, "doc": None},
+            "#exit": {"annotation": tag.exit, "doc": None},
+            "#receive": {"annotation": tag.enter, "doc": None},
+            "#yield": {"annotation": tag.exit, "doc": None},
             "Option": {"annotation": ABSENT, "doc": None},
             "tag": {"annotation": ABSENT, "doc": None},
             "int": {"annotation": ABSENT, "doc": None},
@@ -78,6 +82,10 @@ def test_catalogue():
     assert _catalogue(stout) == {
         **_catalogue(lager),
         stout: {
+            "#enter": {"annotation": tag.enter, "doc": None},
+            "#exit": {"annotation": tag.exit, "doc": None},
+            "#receive": {"annotation": tag.enter, "doc": None},
+            "#yield": {"annotation": tag.exit, "doc": None},
             "Option": {"annotation": ABSENT, "doc": None},
             "int": {"annotation": ABSENT, "doc": None},
             "w": {

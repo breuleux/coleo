@@ -8,17 +8,17 @@ readme = "README.md"
 repository = "https://github.com/breuleux/coleo"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">= 3.7, < 3.11"
 ptera = ">=1.0.0"
 toml = {version = "^0.10.0", optional = true}
 pyyaml = {version = "^5.3", optional = true}
 
 [tool.poetry.dev-dependencies]
-black = {version = "^21.5b1", python = "^3.7"}
-pytest = "^5.4.1"
-pytest-cov = "^2.8.1"
-isort = "^5.8.0"
-flake8 = "^3.9.2"
+black = ">= 21.5b1"
+pytest = ">= 5.4.1"
+pytest-cov = ">= 2.8.1"
+isort = ">= 5.8.0"
+flake8 = ">= 3.9.2"
 unimport = "^0.2.8"
 
 [tool.poetry.extras]
