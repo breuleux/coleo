@@ -5,7 +5,7 @@ import re
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from types import FunctionType, SimpleNamespace
+from types import FunctionType, MethodType, SimpleNamespace
 
 from ptera import (
     BaseOverlay,
@@ -26,6 +26,20 @@ Option = tag.Option
 Argument = Option
 
 
+def through_method(x):
+    if isinstance(x, MethodType):
+        return x.__func__
+    else:
+        return x
+
+
+def get_extras(x):
+    extras = getattr(through_method(x), "__coleo_extras__", [])
+    if isinstance(x, MethodType):
+        extras += getattr(x.__self__, "__coleo_extras__", [])
+    return extras
+
+
 class ConflictError(Exception):
     pass
 
@@ -42,10 +56,11 @@ def _catalogue(seen, results, fn):
         return
 
     seen.add(id(fn))
+    thru = through_method(fn)
 
-    if is_tooled(fn):
-        info = fn.__ptera_info__
-        glb = fn.__globals__
+    if is_tooled(thru):
+        info = thru.__ptera_info__
+        glb = thru.__globals__
         results[fn] = info
         for name, props in info.items():
             if props["provenance"] == "external":
@@ -460,6 +475,11 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
             )
             _make_cli_helper(subparser, subentry, extras, **kwargs)
 
+    elif hasattr(entry, "__coleo_structure__"):
+        return _make_cli_helper(
+            parser, entry.__coleo_structure__, extras, **kwargs
+        )
+
     elif inspect.isclass(entry):
         structure = {"__doc__": entry.__doc__}
         for name, entry2 in vars(entry).items():
@@ -467,18 +487,24 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
                 entry2 = tooled(entry2)
                 setattr(entry, name, entry2)
                 structure[name] = entry2
-            elif is_tooled(entry2) or isinstance(entry2, (dict, type)):
+            elif is_tooled(through_method(entry2)) or isinstance(
+                entry2, (dict, type)
+            ):
                 structure[name] = entry2
         return _make_cli_helper(parser, structure, extras, **kwargs)
 
     else:
         if isinstance(entry, FunctionType):
             entry = tooled(entry)
-        if not is_tooled(entry):
+        if not is_tooled(through_method(entry)):
             raise TypeError(
                 f"Expected a class, dict or a tooled function, not {type(entry)}"
             )
-        all_entries = [entry, *extras, *getattr(entry, "coleo_extras", [])]
+        all_entries = [
+            entry,
+            *extras,
+            *get_extras(entry),
+        ]
         cfg = Configurator(entry_point=all_entries, argparser=parser, **kwargs)
         parser.set_defaults(**{"#cfg": (cfg, entry)})
 
@@ -636,7 +662,7 @@ def auto_cli(entry, args=(), **kwargs):  # pragma: no cover
 def with_extras(*extras):
     def deco(fn):
         fn = tooled(fn)
-        fn.coleo_extras = extras
+        fn.__coleo_extras__ = extras
         return fn
 
     return deco

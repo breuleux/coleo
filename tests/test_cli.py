@@ -455,6 +455,33 @@ def test_subcommands_as_class():
     assert run_cli(farm, argv="duck honk --repeat 3".split()) == "honkhonkhonk"
 
 
+class Building:
+    def __init__(self, building_name):
+        self.building_name = building_name
+        self.__coleo_structure__ = {"build": self.build}
+
+    @tooled
+    def build(self):
+        material: Option
+        return f"built {self.building_name} out of {material}"
+
+
+def test_methods():
+    skyscraper = Building("skyscraper")
+    assert (
+        run_cli(skyscraper.build, argv="--material glass".split())
+        == "built skyscraper out of glass"
+    )
+
+
+def test_subcommands_as_instance():
+    skyscraper = Building("skyscraper")
+    assert (
+        run_cli(skyscraper, argv="build --material rock".split())
+        == "built skyscraper out of rock"
+    )
+
+
 @tooled
 def groot():
     # Name to groot
@@ -710,6 +737,31 @@ def test_extras():
     assert run_cli(fettucini, (fns,), argv="--boo --num 37".split()) == [
         37,
         True,
+    ]
+
+
+class Pizza:
+    def __init__(self, fn):
+        self.fn = fn
+        self.__coleo_extras__ = [self.fn]
+
+    @tooled
+    def garnish(self):
+        # [nargs: +]
+        toppings: Option = True
+
+        self.fn(toppings)
+        return toppings
+
+
+def test_extras_on_instance():
+    pizza = Pizza(append_number)
+    assert run_cli(
+        pizza.garnish, (), argv="--toppings pepperoni cheese --num 26".split()
+    ) == [
+        "pepperoni",
+        "cheese",
+        26,
     ]
 
 
