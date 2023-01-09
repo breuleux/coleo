@@ -224,12 +224,22 @@ def test_config_file(tmpdir):
         stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
     ) == (16, 8)
 
-    assert run_cli(stout, (3,), argv=[f"@{cfg1.strpath}"], expand="@",) == (
+    assert run_cli(
+        stout,
+        (3,),
+        argv=[f"@{cfg1.strpath}"],
+        expand="@",
+    ) == (
         16,
         8,
     )
 
-    assert run_cli(stout, (3,), argv=[f"&{cfg1.strpath}"], expand="@&",) == (
+    assert run_cli(
+        stout,
+        (3,),
+        argv=[f"&{cfg1.strpath}"],
+        expand="@&",
+    ) == (
         16,
         8,
     )
