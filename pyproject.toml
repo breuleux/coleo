@@ -1,42 +1,42 @@
-[tool.poetry]
+[project]
 name = "coleo"
 version = "0.3.3"
 description = "The nicest way to develop a command-line interface"
-authors = ["Olivier Breuleux <breuleux@gmail.com>"]
+authors = [
+    { name = "Olivier Breuleux", email = "breuleux@gmail.com" }
+]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/breuleux/coleo"
+requires-python = ">=3.8"
+dependencies = [
+    "ptera~=1.4.1",
+]
 
-[tool.poetry.dependencies]
-python = "^3.7"
-ptera = "^1.4.1"
-toml = {version = ">=0.10.0", optional = true}
-pyyaml = {version = ">=5.3", optional = true}
+[project.urls]
+Homepage = "https://github.com/breuleux/coleo"
+Repository = "https://github.com/breuleux/coleo"
 
-[tool.poetry.dev-dependencies]
-black = ">= 21.5b1"
-pytest = ">= 7.2.0"
-pytest-cov = ">= 2.8.1"
-isort = ">= 5.8.0"
-flake8 = ">= 3.9.2"
-
-[tool.poetry.extras]
-toml = ["toml"]
-yaml = ["pyyaml"]
-
-[tool.black]
-line-length = 80
-
-[tool.isort]
-known_first_party = "coleo"
-known_third_party = "ptera"
-multi_line_output = 3
-include_trailing_comma = true
-combine_as_imports = true
-
-[tool.unimport]
-exclude = ["**/__init__.py"]
+[project.optional-dependencies]
+toml = [
+    "toml>=0.10.2",
+]
+yaml = [
+    "pyyaml>=6.0.2",
+]
 
 [build-system]
-requires = ["poetry-core@https://github.com/python-poetry/poetry-core/archive/325312c016d69189ac93c945ba0c1b69296c5e54.zip"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.3.3",
+    "pytest-cov>=5.0.0",
+]
+
+[tool.ruff]
+line-length = 90
+
+[tool.ruff.lint]
+extend-select = ["I"]
+ignore = ["F821", "F842"]

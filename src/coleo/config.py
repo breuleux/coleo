@@ -55,8 +55,7 @@ def _read_cfg(file):
     parser.read_string(s)
     if parser.sections() != ["default"]:
         raise OSError(
-            "A cfg/ini file containing options must only contain"
-            " the [default] section"
+            "A cfg/ini file containing options must only contain" " the [default] section"
         )
     return dict(parser["default"])
 

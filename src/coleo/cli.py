@@ -120,9 +120,7 @@ class ArgsExpander:
                 if not isinstance(value, (list, tuple)):
                     value = [value]
                 for other_filename in value:
-                    results.extend(
-                        self._generate_args_from_file(other_filename)
-                    )
+                    results.extend(self._generate_args_from_file(other_filename))
 
             elif key == "#command":
                 results.insert(0, value)
@@ -309,9 +307,7 @@ class Configurator:
                     new_entry.append(line)
             opts.doc.append("\n".join(new_entry))
 
-        opts.has_default_opt_name = (
-            (opts.aliases and opts.aliases[0] == default_opt),
-        )
+        opts.has_default_opt_name = ((opts.aliases and opts.aliases[0] == default_opt),)
 
         for x in data.values():
             x["coleo_options"] = opts
@@ -320,9 +316,7 @@ class Configurator:
     def _fill_argparser(self):
         groups = {}
 
-        entries = [
-            self._analyze_entry(name, data) for name, data in self.names.items()
-        ]
+        entries = [self._analyze_entry(name, data) for name, data in self.names.items()]
 
         positional = list(
             sorted(
@@ -333,17 +327,14 @@ class Configurator:
         if len(positional) > 1:
             if any(entry.loc is None for entry in positional):
                 raise Exception(
-                    "Positional arguments cannot be defined in multiple"
-                    " functions."
+                    "Positional arguments cannot be defined in multiple" " functions."
                 )
             loc0 = positional[0].loc[:2]
             if not all(
-                entry.loc is not None and entry.loc[:2] == loc0
-                for entry in positional
+                entry.loc is not None and entry.loc[:2] == loc0 for entry in positional
             ):
                 raise Exception(
-                    "All positional arguments must be defined in the same"
-                    " function."
+                    "All positional arguments must be defined in the same" " function."
                 )
 
         nonpositional = list(
@@ -476,9 +467,7 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
             _make_cli_helper(subparser, subentry, extras, **kwargs)
 
     elif hasattr(entry, "__coleo_structure__"):
-        return _make_cli_helper(
-            parser, entry.__coleo_structure__, extras, **kwargs
-        )
+        return _make_cli_helper(parser, entry.__coleo_structure__, extras, **kwargs)
 
     elif inspect.isclass(entry):
         structure = {"__doc__": entry.__doc__}
@@ -487,9 +476,7 @@ def _make_cli_helper(parser, entry, extras, **kwargs):
                 entry2 = tooled(entry2)
                 setattr(entry, name, entry2)
                 structure[name] = entry2
-            elif is_tooled(through_method(entry2)) or isinstance(
-                entry2, (dict, type)
-            ):
+            elif is_tooled(through_method(entry2)) or isinstance(entry2, (dict, type)):
                 structure[name] = entry2
         return _make_cli_helper(parser, structure, extras, **kwargs)
 

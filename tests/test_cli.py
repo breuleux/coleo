@@ -110,9 +110,7 @@ def test_catalogue():
 @one_test_per_assert
 def test_cli():
     assert (
-        run_cli(
-            lager, ("a", "b"), argv="--z=:foo".split(), eval_env={"foo": "c"}
-        )
+        run_cli(lager, ("a", "b"), argv="--z=:foo".split(), eval_env={"foo": "c"})
         == "abc"
     )
     assert run_cli(lager, (3, 2), argv="--z=:math:cos(0)".split()) == 6
@@ -125,17 +123,15 @@ def test_cli():
 
     assert run_cli(thingy, (), argv=["--arg", "1"]) == "1"
     assert run_cli(thingy, (), argv=["--arg", "xyz"]) == "xyz"
-    assert (
-        run_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"])
-        == "bar"
-    )
-    assert run_cli(
-        thingy, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"]
-    ) == [1, 2, 3]
+    assert run_cli(thingy, (), eval_env={"foo": "bar"}, argv=["--arg", ":foo"]) == "bar"
+    assert run_cli(thingy, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"]) == [
+        1,
+        2,
+        3,
+    ]
 
     assert (
-        run_cli(thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"])
-        == ":foo"
+        run_cli(thing, (), eval_env={"foo": [1, 2, 3]}, argv=["--arg", ":foo"]) == ":foo"
     )
 
 
@@ -220,9 +216,10 @@ def test_config_file(tmpdir):
     cfg1 = tmpdir.join("config1.json")
     cfg1.write(json.dumps({"z": 3, "w": 10}))
 
-    assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
-    ) == (16, 8)
+    assert run_cli(stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)) == (
+        16,
+        8,
+    )
 
     assert run_cli(
         stout,
@@ -251,9 +248,10 @@ def test_config_file(tmpdir):
 
     cfg3 = tmpdir.join("config3.json")
     cfg3.write(json.dumps({"#include": cfg1.strpath, "w": 10}))
-    assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg3)
-    ) == (16, 8)
+    assert run_cli(stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg3)) == (
+        16,
+        8,
+    )
 
     assert run_cli(stout, (3,), argv=[{"#include": cfg1.strpath}]) == (16, 8)
 
@@ -262,18 +260,20 @@ def test_config_toml(tmpdir):
     cfg1 = tmpdir.join("config1.toml")
     cfg1.write("z = 3\nw = 10\n")
 
-    assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
-    ) == (16, 8)
+    assert run_cli(stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)) == (
+        16,
+        8,
+    )
 
 
 def test_config_cfg(tmpdir):
     cfg1 = tmpdir.join("config1.cfg")
     cfg1.write("[default]\nz = 3\nw = 10\n")
 
-    assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
-    ) == (16, 8)
+    assert run_cli(stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)) == (
+        16,
+        8,
+    )
 
     cfg2 = tmpdir.join("config2.cfg")
     cfg2.write("[ohno]\nz = 3\nw = 10\n")
@@ -287,9 +287,10 @@ def test_config_yaml(tmpdir):
     cfg1 = tmpdir.join("config1.yaml")
     cfg1.write("z: 3\nw: 10\n")
 
-    assert run_cli(
-        stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)
-    ) == (16, 8)
+    assert run_cli(stout, (3,), argv=[], expand=ArgsExpander("@", default_file=cfg1)) == (
+        16,
+        8,
+    )
 
 
 def test_config_unknown(tmpdir):
@@ -376,10 +377,7 @@ def test_subcommands():
 
     # Test with no arguments
     with pytest.raises(SystemExit) as exc:
-        assert (
-            run_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="")
-            == "xyz"
-        )
+        assert run_cli({"thingy": thingy, "patriotism": patriotism}, (), argv="") == "xyz"
     assert exc.value.code == 1
 
 
@@ -457,10 +455,7 @@ class farm:
 
 
 def test_subcommands_as_class():
-    assert (
-        run_cli(farm, argv="build --material wood".split())
-        == "built farm out of wood"
-    )
+    assert run_cli(farm, argv="build --material wood".split()) == "built farm out of wood"
 
     assert run_cli(farm, argv="duck honk --repeat 3".split()) == "honkhonkhonk"
 
@@ -624,9 +619,7 @@ def origami():
 
 
 def test_nargs_remainder():
-    assert run_cli(
-        origami, (), argv="--folds 3 --rest 4 --stuff 6".split()
-    ) == (
+    assert run_cli(origami, (), argv="--folds 3 --rest 4 --stuff 6".split()) == (
         3,
         ["4", "--stuff", "6"],
     )
@@ -661,12 +654,16 @@ def test_append():
     with pytest.raises(SystemExit):
         run_cli(accum, (), argv=["--junk", "x", "y"])
 
-    assert run_cli(
-        accum, (), argv=["--clusters", "x", "y", "--clusters", "z"]
-    ) == ([], [["x", "y"], ["z"]])
+    assert run_cli(accum, (), argv=["--clusters", "x", "y", "--clusters", "z"]) == (
+        [],
+        [["x", "y"], ["z"]],
+    )
     assert run_cli(
         accum, (), argv=["--clusters", "x", "--junk", "y", "--clusters", "z"]
-    ) == (["y"], [["x"], ["z"]])
+    ) == (
+        ["y"],
+        [["x"], ["z"]],
+    )
 
 
 @tooled
@@ -732,17 +729,17 @@ def fettucini(funcs):
 
 def test_extras():
     fns = [append_number, append_bool]
-    assert run_cli(
-        spaghetti, (fns,), extras=fns, argv="--num 37 --boo".split()
-    ) == [37, True]
-
-    assert run_cli(
-        spaghetti, (fns,), extras=fns, argv="--boo --num 37".split()
-    ) == [37, True]
-
-    assert run_cli(spaghetti, (fns,), extras=fns, argv="--no-boo".split()) == [
-        False
+    assert run_cli(spaghetti, (fns,), extras=fns, argv="--num 37 --boo".split()) == [
+        37,
+        True,
     ]
+
+    assert run_cli(spaghetti, (fns,), extras=fns, argv="--boo --num 37".split()) == [
+        37,
+        True,
+    ]
+
+    assert run_cli(spaghetti, (fns,), extras=fns, argv="--no-boo".split()) == [False]
 
     assert run_cli(fettucini, (fns,), argv="--boo --num 37".split()) == [
         37,

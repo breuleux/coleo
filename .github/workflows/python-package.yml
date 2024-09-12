@@ -7,41 +7,57 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-
+  lint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
-
+        python-version: ['3.12']
     steps:
-    - uses: actions/checkout@v2
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    - name: Check out the code
+      uses: actions/checkout@v3
+    - name: Set up uv
+      uses: hynek/setup-cached-uv@v2
       with:
-        python-version: ${{ matrix.python-version }}
+        cache-dependency-path: uv.lock
+    - name: Pin Python version
+      run: uv python pin ${{ matrix.python-version }}
+    - name: Lint check
+      run: uvx ruff check
+    - name: Check formatting
+      run: uvx ruff format --check
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-        poetry install -E toml -E yaml
-
-    - name: Lint with flake8
-      if: ${{ matrix.python-version == '3.10' }}
-      run: poetry run flake8
-
-    - name: Check formatting with black
-      if: ${{ matrix.python-version == '3.10' }}
-      run: poetry run black --check .
-
-    - name: Sort imports
-      if: ${{ matrix.python-version == '3.10' }}
-      run: poetry run isort -c --df .
-
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        settings:
+        - python: '3.8'
+          coverage: false
+        - python: '3.9'
+          coverage: false
+        - python: '3.10'
+          coverage: false
+        - python: '3.11'
+          coverage: false
+        - python: '3.12'
+          coverage: true
+    steps:
+    - name: Check out the code
+      uses: actions/checkout@v3
+    - name: Set up uv
+      uses: hynek/setup-cached-uv@v2
+      with:
+        cache-dependency-path: uv.lock
+    - name: Pin Python version
+      run: uv python pin ${{ matrix.settings.python }}
+    - name: Sync dependencies
+      run: uv sync --all-extras
     - name: Test with pytest
-      run: poetry run pytest --cov=coleo --cov-report term-missing
-
+      if: ${{ !matrix.settings.coverage }}
+      run: uv run pytest tests/
+    - name: Test with pytest and coverage
+      if: ${{ matrix.settings.coverage }}
+      run: uv run pytest --cov=src --cov-report term-missing tests/
     - name: Verify coverage
-      run: poetry run coverage report | tail -1 | egrep "TOTAL +[0-9]+ +0 +100%"
+      if: ${{ matrix.settings.coverage }}
+      run: uv run coverage report | tail -1 | egrep "TOTAL +[0-9]+ +0 +100%"
