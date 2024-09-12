@@ -1,6 +1,6 @@
 [project]
 name = "coleo"
-version = "0.3.3"
+version = "0.3.4"
 description = "The nicest way to develop a command-line interface"
 authors = [
     { name = "Olivier Breuleux", email = "breuleux@gmail.com" }
